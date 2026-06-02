@@ -1,0 +1,22 @@
+source_roots:
+  - src
+  - app
+  - examples
+
+test_roots:
+  - tests
+
+exclude_paths:
+  - tests/generated
+  - reports
+  - .venv
+  - build
+  - dist
+  - migrations
+
+repair_attempts: 2
+update_existing_tests: true
+dry_run: false
+
+gemini_model: gemini-2.5-flash
+temperature: 0.0

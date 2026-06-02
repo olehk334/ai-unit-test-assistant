@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-unit-test-assistant"
+version = "0.1.0"
+description = "AI-powered pytest unit test generator using Gemini through Vertex AI."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [{ name = "AI Test Assistant" }]
+dependencies = [
+    "google-genai>=0.3.0",
+    "pyyaml>=6.0",
+    "typer>=0.12.0",
+    "pytest>=8.0",
+    "python-dotenv>=1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+]
+
+[project.scripts]
+ai-test-assistant = "ai_test_assistant.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["ai_test_assistant*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests/unit"]
+asyncio_mode = "auto"
+filterwarnings = ["ignore::DeprecationWarning"]

@@ -1,0 +1,37 @@
+# Byte-compiled / packaged
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+build/
+dist/
+
+# Virtual environments
+.venv/
+venv/
+env/
+.python-version
+
+# Editor / IDE
+.idea/
+.vscode/
+*.swp
+
+# Test / coverage artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# Assistant runtime outputs
+tests/generated/
+reports/
+
+# Secrets
+.env
+.env.*
+!.env.example
+*.json.key
+*-service-account*.json
+credentials*.json
