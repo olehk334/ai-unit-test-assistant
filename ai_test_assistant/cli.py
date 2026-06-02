@@ -9,7 +9,11 @@ from typing import Optional
 import typer
 
 from .config import AppConfig, load_config
-from .pipeline import run_generate_tests_for_file, run_pr_assistant
+from .pipeline import (
+    apply_suggested_updates,
+    run_generate_tests_for_file,
+    run_pr_assistant,
+)
 
 
 app = typer.Typer(
@@ -136,6 +140,53 @@ def run_pr_assistant_command(
         f"Processed: {len(result.file_results)}"
     )
     typer.echo(f"Report: {cfg.report_path}")
+
+
+@app.command("apply-suggestions")
+def apply_suggestions_command(
+    suggestions_dir: Path = typer.Option(
+        Path("reports/suggested-tests"),
+        "--suggestions-dir",
+        help="Directory containing the suggested test updates.",
+    ),
+    repo_root: Optional[Path] = typer.Option(
+        None, "--repo-root", help="Repo root to apply suggestions into."
+    ),
+    strip_header: bool = typer.Option(
+        True,
+        "--strip-header/--keep-header",
+        help="Strip the AI-generated suggestion header before writing.",
+    ),
+) -> None:
+    """Copy suggested test updates over the original test files.
+
+    Each file under ``--suggestions-dir`` is written to the same relative path
+    under ``--repo-root`` (defaults to the current working directory),
+    overwriting any existing file.
+    """
+    root = (repo_root or Path.cwd()).resolve()
+    src_dir = (
+        suggestions_dir.resolve()
+        if suggestions_dir.is_absolute()
+        else (root / suggestions_dir).resolve()
+    )
+
+    if not src_dir.exists():
+        typer.echo(f"No suggestions directory at {src_dir}.")
+        return
+
+    applied = apply_suggested_updates(src_dir, root, strip_header=strip_header)
+    if not applied:
+        typer.echo("No suggested files to apply.")
+        return
+
+    for dest in applied:
+        try:
+            rel = dest.relative_to(root)
+        except ValueError:
+            rel = dest
+        typer.echo(f"Applied: {rel}")
+    typer.echo(f"\nApplied {len(applied)} file(s).")
 
 
 if __name__ == "__main__":  # pragma: no cover - manual invocation
