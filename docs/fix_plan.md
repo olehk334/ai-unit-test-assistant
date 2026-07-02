@@ -37,7 +37,7 @@ after each. No pushes, no deploys without explicit permission.
 - [x] **B5+B8** CLI: drop `_build_config` pass-through (each command builds
       its own overrides dict); `--dry-run/--no-dry-run` tri-state so the CLI
       can override a config-file `dry_run: true`.
-- [ ] **B6** Remove the extra header from the dry-run template (files were
+- [x] **B6** Remove the extra header from the dry-run template (files were
       getting two headers).
 - [ ] **B7** `write_json_report`: rename `report_path` param to
       `markdown_report_path` to match what it actually receives.
