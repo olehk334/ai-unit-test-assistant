@@ -109,8 +109,10 @@ The PR workflow needs three secrets / variables to talk to Vertex AI:
    for a complete pytest module.
 4. The response is cleaned (Markdown fences stripped) and validated (must
    parse, must contain at least one `test_` function or `Test...` class).
-5. The generated module is written to `tests/generated/test_<stem>_generated.py`
-   with a header that flags it as AI-generated.
+5. The generated module is written to `tests/generated/`, named after the
+   repo-relative source path (`examples/calculator.py` →
+   `test_examples_calculator_generated.py`) with a header that flags it as
+   AI-generated.
 6. pytest runs the generated module. If it fails the assistant feeds the
    failure back to Gemini up to `repair_attempts` times.
 

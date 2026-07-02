@@ -32,8 +32,18 @@ _SUGGESTED_HEADER = (
 )
 
 
-def _generated_path_for(source_file: Path, output_dir: Path) -> Path:
-    return output_dir / f"test_{source_file.stem}_generated.py"
+def generated_test_path_for(
+    source_file: Path, output_dir: Path, repo_root: Path
+) -> Path:
+    """Name the generated test after the repo-relative source path so two
+    sources with the same stem (app/models.py, lib/models.py) cannot collide.
+    """
+    try:
+        rel = source_file.resolve().relative_to(repo_root.resolve())
+    except ValueError:
+        rel = Path(source_file.name)
+    flat_name = "_".join(rel.with_suffix("").parts)
+    return output_dir / f"test_{flat_name}_generated.py"
 
 
 def _is_test_file_name(name: str) -> bool:
@@ -158,7 +168,9 @@ async def _process_file(
         except OSError:
             continue
 
-    generated_path = _generated_path_for(source_path, config.output_dir)
+    generated_path = generated_test_path_for(
+        source_path, config.output_dir, config.repo_root
+    )
 
     try:
         _, pytest_result = await _generate_and_repair(
@@ -269,7 +281,9 @@ async def run_generate_tests_for_file(config: AppConfig, source: Path) -> FileRe
         except OSError:
             continue
 
-    generated_path = _generated_path_for(source, config.output_dir)
+    generated_path = generated_test_path_for(
+        source, config.output_dir, config.repo_root
+    )
     try:
         _, pytest_result = await _generate_and_repair(
             llm, config, analysis, targets, related_content, generated_path
