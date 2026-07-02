@@ -1,0 +1,229 @@
+"""Analysis worker: consumes PR jobs from Pub/Sub and runs the assistant.
+
+Receives Pub/Sub *push* messages, clones the PR head, runs the existing
+``ai_test_assistant`` pipeline as a library, uploads artifacts to GCS, and
+posts a commit status back to GitHub.
+
+Response codes drive the queue semantics:
+    200  job done or safely skipped        -> message acknowledged
+    500  processing failed                 -> Pub/Sub retries, then dead-letters
+
+Environment:
+    GOOGLE_CLOUD_PROJECT / GOOGLE_CLOUD_LOCATION / GEMINI_MODEL / DRY_RUN
+                       read by the assistant's config loader
+    ARTIFACTS_BUCKET   GCS bucket for reports and generated tests (optional:
+                       unset = local mode, no upload and no idempotency check)
+    GITHUB_TOKEN       token for commit statuses (optional: unset = no status)
+
+Run with Cloud Run concurrency=1: the pipeline shells out to pytest and git,
+so scaling happens by adding instances, not threads.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import base64
+import binascii
+import json
+import os
+import subprocess
+import tempfile
+import urllib.request
+from pathlib import Path
+from typing import Any
+
+from fastapi import FastAPI, Request, Response
+
+from ai_test_assistant.cache import LRUCache
+from ai_test_assistant.config import load_config
+from ai_test_assistant.llm_client import LlmClient
+from ai_test_assistant.models import PipelineResult
+from ai_test_assistant.pipeline import run_pr_assistant
+
+app = FastAPI(title="ai-test-assistant analysis worker")
+
+# Process-lifetime cache shared across jobs: a re-pushed branch with unchanged
+# files sends byte-identical prompts, which this turns into free cache hits.
+RESPONSE_CACHE = LRUCache(capacity=256)
+
+
+class MalformedJob(ValueError):
+    """Message cannot ever be processed; ack it instead of retrying forever."""
+
+
+def decode_pubsub_push(envelope: dict[str, Any]) -> dict[str, Any]:
+    message = envelope.get("message")
+    if not isinstance(message, dict) or "data" not in message:
+        raise MalformedJob("missing message.data in Pub/Sub envelope")
+    try:
+        payload = base64.b64decode(message["data"])
+        job = json.loads(payload)
+    except (binascii.Error, ValueError) as exc:
+        raise MalformedJob(f"undecodable job payload: {exc}") from exc
+
+    required = {"repo_full_name", "clone_url", "pr_number", "head_sha", "base_ref"}
+    missing = required - job.keys()
+    if missing:
+        raise MalformedJob(f"job missing fields: {sorted(missing)}")
+    return job
+
+
+def artifact_prefix(job: dict[str, Any]) -> str:
+    return f"{job['repo_full_name']}/{job['pr_number']}/{job['head_sha']}"
+
+
+def report_already_uploaded(job: dict[str, Any]) -> bool:
+    """Idempotency check: a finished job left its JSON report in GCS."""
+    bucket_name = os.environ.get("ARTIFACTS_BUCKET")
+    if not bucket_name:
+        return False
+    from google.cloud import storage
+
+    blob = storage.Client().bucket(bucket_name).blob(
+        f"{artifact_prefix(job)}/reports/ai-test-report.json"
+    )
+    return blob.exists()
+
+
+def clone_pr_head(job: dict[str, Any], workdir: Path) -> Path:
+    clone_dir = workdir / "repo"
+    subprocess.run(
+        ["git", "clone", "--quiet", job["clone_url"], str(clone_dir)],
+        check=True,
+        timeout=120,
+        capture_output=True,
+    )
+    # PR refs also cover heads pushed from forks, which a plain clone lacks.
+    subprocess.run(
+        ["git", "-C", str(clone_dir), "fetch", "--quiet", "origin",
+         f"pull/{job['pr_number']}/head"],
+        check=False,
+        timeout=120,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "-C", str(clone_dir), "checkout", "--quiet", job["head_sha"]],
+        check=True,
+        timeout=60,
+        capture_output=True,
+    )
+    return clone_dir
+
+
+async def run_assistant_on_clone(job: dict[str, Any], clone_dir: Path) -> PipelineResult:
+    config = load_config(
+        repo_root=clone_dir,
+        cli_overrides={"base_ref": f"origin/{job['base_ref']}"},
+    )
+    llm = LlmClient(config, response_cache=RESPONSE_CACHE)
+    return await run_pr_assistant(config, llm=llm)
+
+
+def upload_artifacts(job: dict[str, Any], clone_dir: Path) -> str | None:
+    """Upload reports and generated tests to GCS; return the GCS prefix URL."""
+    bucket_name = os.environ.get("ARTIFACTS_BUCKET")
+    if not bucket_name:
+        return None
+    from google.cloud import storage
+
+    bucket = storage.Client().bucket(bucket_name)
+    prefix = artifact_prefix(job)
+    for local_dir in (clone_dir / "reports", clone_dir / "tests" / "generated"):
+        if not local_dir.exists():
+            continue
+        for path in local_dir.rglob("*"):
+            if not path.is_file():
+                continue
+            relative = path.relative_to(clone_dir).as_posix()
+            bucket.blob(f"{prefix}/{relative}").upload_from_filename(str(path))
+    return f"https://console.cloud.google.com/storage/browser/{bucket_name}/{prefix}"
+
+
+def summarize_for_commit_status(result: PipelineResult) -> tuple[str, str]:
+    """Return (state, description) for the GitHub commit status."""
+    failed = sum(1 for r in result.file_results if r.status in ("failed", "error"))
+    passed = sum(1 for r in result.file_results if r.status == "passed")
+    skipped = sum(1 for r in result.file_results if r.status == "skipped")
+    state = "failure" if failed else "success"
+    description = (
+        f"generated tests: {passed} passed, {failed} failed, {skipped} skipped"
+    )
+    return state, description
+
+
+def post_commit_status(
+    job: dict[str, Any], state: str, description: str, target_url: str | None
+) -> None:
+    token = os.environ.get("GITHUB_TOKEN")
+    if not token:
+        return
+    url = (
+        f"https://api.github.com/repos/{job['repo_full_name']}"
+        f"/statuses/{job['head_sha']}"
+    )
+    body = {
+        "state": state,
+        "description": description[:140],
+        "context": "ai-test-assistant",
+    }
+    if target_url:
+        body["target_url"] = target_url
+    request = urllib.request.Request(
+        url,
+        data=json.dumps(body).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/vnd.github+json",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+    with urllib.request.urlopen(request, timeout=30):
+        pass
+
+
+async def process_job(job: dict[str, Any]) -> PipelineResult:
+    with tempfile.TemporaryDirectory(prefix="ai-test-assistant-") as workdir:
+        clone_dir = clone_pr_head(job, Path(workdir))
+        result = await run_assistant_on_clone(job, clone_dir)
+        artifacts_url = upload_artifacts(job, clone_dir)
+        state, description = summarize_for_commit_status(result)
+        post_commit_status(job, state, description, artifacts_url)
+        return result
+
+
+@app.get("/healthz")
+def healthz() -> dict[str, str]:
+    return {"status": "ok"}
+
+
+@app.post("/pubsub")
+async def handle_pubsub_push(request: Request) -> Response:
+    envelope = await request.json()
+    try:
+        job = decode_pubsub_push(envelope)
+    except MalformedJob as exc:
+        # Retrying a malformed message can never succeed; ack it away.
+        return Response(status_code=200, content=f"ignored: {exc}")
+
+    if report_already_uploaded(job):
+        return Response(
+            status_code=200,
+            content=f"skipped: {artifact_prefix(job)} already processed",
+        )
+
+    try:
+        result = await process_job(job)
+    except Exception as exc:  # noqa: BLE001 - let Pub/Sub retry, then dead-letter
+        return Response(status_code=500, content=f"processing failed: {exc}")
+
+    return Response(
+        status_code=200,
+        content=json.dumps(
+            {
+                "processed": artifact_prefix(job),
+                "files": len(result.file_results),
+            }
+        ),
+        media_type="application/json",
+    )
