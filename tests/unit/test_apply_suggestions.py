@@ -25,9 +25,10 @@ def test_copies_files_to_matching_paths(tmp_path: Path) -> None:
     (sugg / "tests").mkdir(parents=True)
     (sugg / "tests" / "test_old.py").write_text(_SUGGESTED, encoding="utf-8")
 
-    applied = apply_suggested_updates(sugg, repo)
+    applied, skipped = apply_suggested_updates(sugg, repo)
 
     assert len(applied) == 1
+    assert skipped == []
     target = repo / "tests" / "test_old.py"
     content = target.read_text(encoding="utf-8")
     # Header stripped, real test code preserved.
@@ -53,9 +54,10 @@ def test_returns_empty_when_suggestions_dir_missing(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     sugg = tmp_path / "does-not-exist"
 
-    applied = apply_suggested_updates(sugg, repo)
+    applied, skipped = apply_suggested_updates(sugg, repo)
 
     assert applied == []
+    assert skipped == []
 
 
 def test_creates_intermediate_directories(tmp_path: Path) -> None:
@@ -70,3 +72,36 @@ def test_creates_intermediate_directories(tmp_path: Path) -> None:
     target = repo / "tests" / "sub" / "pkg" / "test_deep.py"
     assert target.exists()
     assert "def test_thing" in target.read_text(encoding="utf-8")
+
+
+def test_refuses_to_write_non_test_files(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    (repo / "calculator").mkdir(parents=True)
+    production = repo / "calculator" / "operations.py"
+    production.write_text("def add(a, b): return a + b\n", encoding="utf-8")
+
+    sugg = tmp_path / "suggestions"
+    (sugg / "calculator").mkdir(parents=True)
+    # A corrupted/malicious artifact tries to replace production code.
+    (sugg / "calculator" / "operations.py").write_text(
+        "def add(a, b): return 0\n", encoding="utf-8"
+    )
+
+    applied, skipped = apply_suggested_updates(sugg, repo)
+
+    assert applied == []
+    assert len(skipped) == 1
+    assert production.read_text(encoding="utf-8") == "def add(a, b): return a + b\n"
+
+
+def test_accepts_suffix_style_test_names(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    sugg = tmp_path / "suggestions"
+    (sugg / "tests").mkdir(parents=True)
+    (sugg / "tests" / "operations_test.py").write_text(_SUGGESTED, encoding="utf-8")
+
+    applied, skipped = apply_suggested_updates(sugg, repo)
+
+    assert len(applied) == 1
+    assert skipped == []
+    assert (repo / "tests" / "operations_test.py").exists()

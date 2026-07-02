@@ -36,33 +36,48 @@ def _generated_path_for(source_file: Path, output_dir: Path) -> Path:
     return output_dir / f"test_{source_file.stem}_generated.py"
 
 
+def _is_test_file_name(name: str) -> bool:
+    return name.startswith("test_") or name.endswith("_test.py")
+
+
 def apply_suggested_updates(
     suggestions_dir: Path,
     repo_root: Path,
     strip_header: bool = True,
-) -> list[Path]:
-    """Copy each .py file under ``suggestions_dir`` to the same relative path
-    under ``repo_root``, overwriting any existing file.
+) -> tuple[list[Path], list[Path]]:
+    """Copy each suggested test file under ``suggestions_dir`` to the same
+    relative path under ``repo_root``, overwriting the original test file.
+
+    Only files that look like test files (``test_*.py`` / ``*_test.py`` —
+    the same rule test_finder selects them by) and resolve inside
+    ``repo_root`` are applied. Anything else is refused: suggestions must
+    never be able to overwrite production code, even from a corrupted
+    artifact.
 
     If ``strip_header`` is True, the AI-generated suggestion header is removed
     from the top of each file before it is written.
 
-    Returns the list of files that were written.
+    Returns ``(applied, skipped)`` paths.
     """
     applied: list[Path] = []
+    skipped: list[Path] = []
     if not suggestions_dir.exists():
-        return applied
+        return applied, skipped
 
+    resolved_root = repo_root.resolve()
     for src in sorted(suggestions_dir.rglob("*.py")):
         rel = src.relative_to(suggestions_dir)
         dest = (repo_root / rel).resolve()
+        if not _is_test_file_name(rel.name) or not dest.is_relative_to(resolved_root):
+            skipped.append(src)
+            continue
         text = src.read_text(encoding="utf-8")
         if strip_header and text.startswith(_SUGGESTED_HEADER):
             text = text[len(_SUGGESTED_HEADER):].lstrip("\n")
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(text, encoding="utf-8")
         applied.append(dest)
-    return applied
+    return applied, skipped
 
 
 def _suggested_path_for(

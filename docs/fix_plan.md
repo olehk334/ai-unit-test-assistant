@@ -6,7 +6,7 @@ after each. No pushes, no deploys without explicit permission.
 
 ## A. Correctness / safety
 
-- [ ] **A1** `apply_suggested_updates` must only write test files
+- [x] **A1** `apply_suggested_updates` must only write test files
       (mirror test_finder's naming rule: `test_*.py` / `*_test.py`) and only
       inside the repo root; return skipped paths, CLI echoes them. Tests.
 - [ ] **A2** Generated test filename derives from the repo-relative path

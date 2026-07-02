@@ -175,7 +175,9 @@ def apply_suggestions_command(
         typer.echo(f"No suggestions directory at {src_dir}.")
         return
 
-    applied = apply_suggested_updates(src_dir, root, strip_header=strip_header)
+    applied, skipped = apply_suggested_updates(src_dir, root, strip_header=strip_header)
+    for path in skipped:
+        typer.echo(f"Skipped (not a test file): {path}")
     if not applied:
         typer.echo("No suggested files to apply.")
         return
