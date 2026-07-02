@@ -13,6 +13,7 @@ Environment:
 
 from __future__ import annotations
 
+import functools
 import hashlib
 import hmac
 import json
@@ -53,15 +54,20 @@ def extract_pr_job(event: dict[str, Any], delivery_id: str) -> dict[str, Any] | 
     }
 
 
-def publish_pr_job(job: dict[str, Any]) -> str:
-    """Publish the job to Pub/Sub and return the message id."""
+@functools.lru_cache(maxsize=1)
+def _pubsub_publisher():
     # Imported lazily so unit tests do not need the GCP SDK installed
     # (same convention as the lazy google-genai import in llm_client).
+    # Cached so every webhook reuses one client connection.
     from google.cloud import pubsub_v1
 
+    return pubsub_v1.PublisherClient()
+
+
+def publish_pr_job(job: dict[str, Any]) -> str:
+    """Publish the job to Pub/Sub and return the message id."""
     topic = os.environ["PUBSUB_TOPIC"]
-    publisher = pubsub_v1.PublisherClient()
-    future = publisher.publish(topic, json.dumps(job).encode("utf-8"))
+    future = _pubsub_publisher().publish(topic, json.dumps(job).encode("utf-8"))
     return future.result(timeout=10)
 
 
