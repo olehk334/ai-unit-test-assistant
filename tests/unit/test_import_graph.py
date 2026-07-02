@@ -72,6 +72,19 @@ def test_relative_import_inside_package(tmp_path: Path) -> None:
     assert _names(order) == ["operations.py", "pricing.py"]
 
 
+def test_from_package_import_module_creates_edge(tmp_path: Path) -> None:
+    _write(tmp_path, "calculator/__init__.py", "")
+    operations = _write(
+        tmp_path, "calculator/operations.py", "def add(a, b): return a + b\n"
+    )
+    service = _write(tmp_path, "service.py", "from calculator import operations\n")
+
+    order = order_files_by_imports([service, operations], tmp_path)
+
+    assert _names(order) == ["operations.py", "service.py"]
+    assert order.cycle_files == []
+
+
 def test_single_file_passes_through(tmp_path: Path) -> None:
     only = _write(tmp_path, "only.py", "import os\n")
 

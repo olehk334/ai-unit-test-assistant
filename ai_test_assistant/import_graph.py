@@ -53,6 +53,10 @@ def _imported_modules(file_path: Path, repo_root: Path) -> set[str]:
             if node.level == 0:
                 if node.module:
                     imported.add(node.module)
+                    # "from calculator import operations" imports the module
+                    # calculator.operations, not just the package.
+                    for alias in node.names:
+                        imported.add(f"{node.module}.{alias.name}")
             else:
                 # Relative import: resolve against this file's package.
                 base = own_package_parts[: len(own_package_parts) - (node.level - 1)]

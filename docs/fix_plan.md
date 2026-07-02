@@ -18,7 +18,7 @@ after each. No pushes, no deploys without explicit permission.
 - [x] **A4** `infra/deploy.sh`: replace non-existent
       `gcloud builds submit --file` with per-service cloudbuild configs.
       `bash -n` syntax check (cannot run for real without cloud).
-- [ ] **A5** `import_graph`: `from package import module` must create an
+- [x] **A5** `import_graph`: `from package import module` must create an
       edge to `package.module`, not only `package`. Test.
 - [ ] **A6** `test_finder`: match target names with word boundaries so
       `add` no longer matches `address`. Test.
