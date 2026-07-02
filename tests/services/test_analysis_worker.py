@@ -135,12 +135,14 @@ def test_metrics_endpoint_exposes_job_counters(client: TestClient) -> None:
 
 class TestCommitStatusSummary:
     def test_failure_when_any_file_failed(self) -> None:
+        from pathlib import Path
+
         from ai_test_assistant.models import FileResult
 
         result = PipelineResult(
             file_results=[
-                FileResult(source_file=None, status="passed"),
-                FileResult(source_file=None, status="failed"),
+                FileResult(source_file=Path("a.py"), status="passed"),
+                FileResult(source_file=Path("b.py"), status="failed"),
             ]
         )
         state, description = worker_app.summarize_for_commit_status(result)
@@ -148,12 +150,14 @@ class TestCommitStatusSummary:
         assert "1 failed" in description
 
     def test_success_when_all_passed_or_skipped(self) -> None:
+        from pathlib import Path
+
         from ai_test_assistant.models import FileResult
 
         result = PipelineResult(
             file_results=[
-                FileResult(source_file=None, status="passed"),
-                FileResult(source_file=None, status="skipped"),
+                FileResult(source_file=Path("a.py"), status="passed"),
+                FileResult(source_file=Path("b.py"), status="skipped"),
             ]
         )
         state, _ = worker_app.summarize_for_commit_status(result)

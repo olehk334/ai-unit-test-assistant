@@ -8,7 +8,14 @@ from .config import AppConfig
 from .git_utils import get_changed_python_files
 from .import_graph import order_files_by_imports
 from .llm_client import LlmClient
-from .models import FileResult, PipelineResult, SourceAnalysis, TestTarget
+from .models import (
+    ChangedFile,
+    FileResult,
+    PipelineResult,
+    PytestResult,
+    SourceAnalysis,
+    TestTarget,
+)
 from .pytest_runner import run_pytest
 from .report import write_json_report, write_markdown_report
 from .source_analyzer import analyze_source_file, select_test_targets
@@ -113,7 +120,7 @@ async def _generate_and_repair(
     targets: list[TestTarget],
     related_tests_content: dict[Path, str],
     generated_path: Path,
-) -> tuple[str, "object | None"]:
+) -> tuple[str, PytestResult]:
     """Generate tests and try to repair them if pytest fails.
 
     Returns ``(final_test_code, pytest_result)``.
@@ -145,7 +152,7 @@ async def _generate_and_repair(
 async def _process_file(
     config: AppConfig,
     llm: LlmClient,
-    changed_file,
+    changed_file: ChangedFile,
 ) -> FileResult:
     source_path = changed_file.path
     analysis = analyze_source_file(source_path, config.repo_root)
