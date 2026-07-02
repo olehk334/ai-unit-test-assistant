@@ -112,8 +112,11 @@ def write_markdown_report(result: PipelineResult, report_path: Path, repo_root: 
     report_path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
 
 
-def write_json_report(result: PipelineResult, report_path: Path, repo_root: Path) -> None:
-    """Write a machine-readable JSON report next to the Markdown report."""
+def write_json_report(
+    result: PipelineResult, markdown_report_path: Path, repo_root: Path
+) -> None:
+    """Write a machine-readable JSON report next to the Markdown report
+    (same name, ``.json`` suffix)."""
     summary = _summarize(result)
     payload = {
         "summary": summary,
@@ -143,6 +146,6 @@ def write_json_report(result: PipelineResult, report_path: Path, repo_root: Path
             for r in result.file_results
         ],
     }
-    json_path = report_path.with_suffix(".json")
+    json_path = markdown_report_path.with_suffix(".json")
     json_path.parent.mkdir(parents=True, exist_ok=True)
     json_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")

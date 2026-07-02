@@ -39,7 +39,7 @@ after each. No pushes, no deploys without explicit permission.
       can override a config-file `dry_run: true`.
 - [x] **B6** Remove the extra header from the dry-run template (files were
       getting two headers).
-- [ ] **B7** `write_json_report`: rename `report_path` param to
+- [x] **B7** `write_json_report`: rename `report_path` param to
       `markdown_report_path` to match what it actually receives.
 - [ ] **B10** Renames: worker `process_job` → `run_analysis_job`,
       pipeline `_process_file` → `_run_assistant_on_file`.
