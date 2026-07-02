@@ -41,7 +41,7 @@ after each. No pushes, no deploys without explicit permission.
       getting two headers).
 - [x] **B7** `write_json_report`: rename `report_path` param to
       `markdown_report_path` to match what it actually receives.
-- [ ] **B10** Renames: worker `process_job` → `run_analysis_job`,
+- [x] **B10** Renames: worker `process_job` → `run_analysis_job`,
       pipeline `_process_file` → `_run_assistant_on_file`.
       (`cache.py` filename stays — single clear responsibility, documented.)
 

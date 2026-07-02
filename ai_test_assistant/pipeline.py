@@ -149,7 +149,7 @@ async def _generate_and_repair(
     return test_code, pytest_result
 
 
-async def _process_file(
+async def _run_assistant_on_file(
     config: AppConfig,
     llm: LlmClient,
     changed_file: ChangedFile,
@@ -248,7 +248,7 @@ async def run_pr_assistant(
 
     for changed_file in import_order.ordered_files:
         try:
-            result = await _process_file(config, llm, changed_file)
+            result = await _run_assistant_on_file(config, llm, changed_file)
         except Exception as exc:  # noqa: BLE001 - keep going on per-file failures
             result = FileResult(
                 source_file=changed_file.path,

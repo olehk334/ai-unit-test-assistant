@@ -255,7 +255,7 @@ def post_commit_status(
         )
 
 
-async def process_job(job: dict[str, Any]) -> PipelineResult:
+async def run_analysis_job(job: dict[str, Any]) -> PipelineResult:
     with tempfile.TemporaryDirectory(prefix="ai-test-assistant-") as workdir:
         clone_dir = clone_pr_head(job, Path(workdir))
         result, usage = await run_assistant_on_clone(job, clone_dir)
@@ -295,7 +295,7 @@ async def handle_pubsub_push(request: Request) -> Response:
 
     try:
         with JOB_DURATION.time():
-            result = await process_job(job)
+            result = await run_analysis_job(job)
     except Exception as exc:  # noqa: BLE001 - let Pub/Sub retry, then dead-letter
         JOBS_PROCESSED.labels(status="failed").inc()
         return Response(status_code=500, content=f"processing failed: {exc}")

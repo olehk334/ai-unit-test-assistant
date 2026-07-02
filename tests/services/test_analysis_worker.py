@@ -70,7 +70,7 @@ class TestPubsubEndpoint:
             processed.append(job)
             return PipelineResult()
 
-        monkeypatch.setattr(worker_app, "process_job", fake_process)
+        monkeypatch.setattr(worker_app, "run_analysis_job", fake_process)
 
         response = client.post("/pubsub", json=_envelope(_job()))
 
@@ -86,7 +86,7 @@ class TestPubsubEndpoint:
         async def failing_process(job: dict) -> PipelineResult:
             raise RuntimeError("clone failed")
 
-        monkeypatch.setattr(worker_app, "process_job", failing_process)
+        monkeypatch.setattr(worker_app, "run_analysis_job", failing_process)
 
         response = client.post("/pubsub", json=_envelope(_job()))
 
@@ -101,7 +101,7 @@ class TestPubsubEndpoint:
         async def fake_process(job: dict) -> PipelineResult:
             return PipelineResult()
 
-        monkeypatch.setattr(worker_app, "process_job", fake_process)
+        monkeypatch.setattr(worker_app, "run_analysis_job", fake_process)
 
         response = client.post("/pubsub", json=_envelope(_job()))
 
