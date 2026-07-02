@@ -75,3 +75,5 @@ class FileResult:
 class PipelineResult:
     changed_files: list[Path] = field(default_factory=list)
     file_results: list[FileResult] = field(default_factory=list)
+    # Files whose imports form a cycle; they were processed in original order.
+    import_cycle_files: list[Path] = field(default_factory=list)

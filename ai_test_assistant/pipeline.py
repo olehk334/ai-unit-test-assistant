@@ -6,6 +6,7 @@ from pathlib import Path
 
 from .config import AppConfig
 from .git_utils import get_changed_python_files
+from .import_graph import order_files_by_imports
 from .llm_client import LlmClient
 from .models import FileResult, PipelineResult, SourceAnalysis, TestTarget
 from .pytest_runner import run_pytest
@@ -194,16 +195,24 @@ async def _process_file(
     )
 
 
-async def run_pr_assistant(config: AppConfig) -> PipelineResult:
-    """Run the full PR assistant pipeline."""
+async def run_pr_assistant(
+    config: AppConfig,
+    llm: LlmClient | None = None,
+) -> PipelineResult:
+    """Run the full PR assistant pipeline.
+
+    ``llm`` may be supplied by long-running callers (the analysis worker) so a
+    response cache and usage stats survive across pipeline runs.
+    """
     changed_files = get_changed_python_files(
         config.repo_root, config.base_ref, config.exclude_paths
     )
+    import_order = order_files_by_imports(changed_files, config.repo_root)
 
-    llm = LlmClient(config)
+    llm = llm or LlmClient(config)
     file_results: list[FileResult] = []
 
-    for changed_file in changed_files:
+    for changed_file in import_order.ordered_files:
         try:
             result = await _process_file(config, llm, changed_file)
         except Exception as exc:  # noqa: BLE001 - keep going on per-file failures
@@ -215,8 +224,9 @@ async def run_pr_assistant(config: AppConfig) -> PipelineResult:
         file_results.append(result)
 
     pipeline_result = PipelineResult(
-        changed_files=[cf.path for cf in changed_files],
+        changed_files=[cf.path for cf in import_order.ordered_files],
         file_results=file_results,
+        import_cycle_files=import_order.cycle_files,
     )
 
     write_markdown_report(pipeline_result, config.report_path, config.repo_root)

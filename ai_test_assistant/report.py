@@ -90,6 +90,13 @@ def write_markdown_report(result: PipelineResult, report_path: Path, repo_root: 
     )
     lines.append(f"Passed generated tests: {summary['passed_generated_tests']}")
     lines.append(f"Failed generated tests: {summary['failed_generated_tests']}")
+    if result.import_cycle_files:
+        cycle_names = ", ".join(
+            _relative_or_str(p, repo_root) for p in result.import_cycle_files
+        )
+        lines.append(
+            f"Import cycle detected (files processed in original order): {cycle_names}"
+        )
     lines.append("")
     lines.append("## Details")
     lines.append("")
@@ -111,6 +118,9 @@ def write_json_report(result: PipelineResult, report_path: Path, repo_root: Path
     payload = {
         "summary": summary,
         "changed_files": [_relative_or_str(p, repo_root) for p in result.changed_files],
+        "import_cycle_files": [
+            _relative_or_str(p, repo_root) for p in result.import_cycle_files
+        ],
         "files": [
             {
                 "source_file": _relative_or_str(r.source_file, repo_root),
