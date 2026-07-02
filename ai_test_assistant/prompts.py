@@ -73,7 +73,9 @@ def _format_related_tests(related: dict[Path, str]) -> str:
         return "(no related test files were found)"
     chunks: list[str] = []
     for path, content in related.items():
-        chunks.append(f"--- Existing test file: {path} ---")
+        # File name only: absolute paths would leak the temporary clone
+        # location, making otherwise-identical prompts uncacheable.
+        chunks.append(f"--- Existing test file: {path.name} ---")
         chunks.append(content.strip())
         chunks.append("")
     return "\n".join(chunks).strip()
@@ -86,8 +88,7 @@ def build_generate_tests_prompt(
 ) -> tuple[str, str]:
     """Build the (system_instruction, user_prompt) pair for new test generation."""
     user_prompt = (
-        f"Module path: {analysis.module_path}\n"
-        f"Source file: {analysis.file_path}\n\n"
+        f"Module path: {analysis.module_path}\n\n"
         f"Full source code:\n"
         f"```\n{analysis.source_code.strip()}\n```\n\n"
         f"Test targets to cover:\n{_format_targets(targets)}\n\n"
@@ -125,12 +126,11 @@ def build_update_tests_prompt(
 ) -> tuple[str, str]:
     """Build the (system_instruction, user_prompt) pair for updating existing tests."""
     user_prompt = (
-        f"Production module: {analysis.module_path}\n"
-        f"Production source file: {analysis.file_path}\n\n"
+        f"Production module: {analysis.module_path}\n\n"
         f"Current production source code:\n"
         f"```\n{analysis.source_code.strip()}\n```\n\n"
         f"Changed/affected targets:\n{_format_targets(targets)}\n\n"
-        f"Existing test file path: {test_file_path}\n"
+        f"Existing test file: {test_file_path.name}\n"
         f"Existing test file content:\n"
         f"```\n{existing_test_code.strip()}\n```\n\n"
         "Produce the full updated test file. Return Python code only."
