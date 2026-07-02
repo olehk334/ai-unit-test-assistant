@@ -124,6 +124,23 @@ The PR workflow needs three secrets / variables to talk to Vertex AI:
    with a header asking the human reviewer to compare before replacing the
    original. The original test files are never overwritten automatically.
 
+## Platform mode (PDP 6–8)
+
+Beyond the CLI/CI mode, the assistant runs as an event-driven service:
+GitHub webhook → Cloud Run receiver → Pub/Sub → Cloud Run worker → GCS
+artifacts + commit status. See:
+
+- [docs/architecture.md](docs/architecture.md) — services, message contract,
+  failure modes, local run instructions
+- [docs/cloud_equivalence.md](docs/cloud_equivalence.md) — GCP/AWS/Azure
+  mapping and the theory behind the design
+- [docs/monitoring.md](docs/monitoring.md) — Prometheus metrics and the local
+  Grafana demo (`monitoring/docker-compose.yml`)
+- [docs/algorithms.md](docs/algorithms.md) — import-graph topological sort
+  and the hand-rolled LRU/LFU caches used for LLM response caching
+- `infra/deploy.sh` — one-shot GCP deployment (creates billable resources;
+  run deliberately)
+
 ## Limitations
 
 - Only Python projects are supported.
