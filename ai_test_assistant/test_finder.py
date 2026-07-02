@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 from .models import TestTarget
@@ -53,6 +54,11 @@ def _scan_for_references(
         if "." in target.qualified_name:
             needles.add(target.qualified_name.split(".", 1)[0])
 
+    # Word boundaries so a target named "add" does not match "address".
+    reference_pattern = re.compile(
+        "|".join(rf"\b{re.escape(needle)}\b" for needle in sorted(needles) if needle)
+    )
+
     matches: list[Path] = []
     for root_name in test_roots:
         root = repo_root / root_name
@@ -66,7 +72,7 @@ def _scan_for_references(
                 text = path.read_text(encoding="utf-8", errors="ignore")
             except OSError:
                 continue
-            if any(needle and needle in text for needle in needles):
+            if reference_pattern.search(text):
                 matches.append(path)
     return matches
 

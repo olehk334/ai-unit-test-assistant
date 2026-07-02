@@ -52,6 +52,25 @@ def test_finds_test_file_by_import_text(tmp_path: Path) -> None:
     assert indirect.resolve() in [p.resolve() for p in found]
 
 
+def test_short_target_name_does_not_match_substrings(tmp_path: Path) -> None:
+    repo = tmp_path
+    (repo / "src").mkdir()
+    source = repo / "src" / "math_ops.py"
+    source.write_text("def add(a, b): return a + b\n", encoding="utf-8")
+
+    (repo / "tests").mkdir()
+    unrelated = repo / "tests" / "test_users.py"
+    # Contains "address" but never the standalone word "add" or the module.
+    unrelated.write_text(
+        "def test_user_address():\n    address = 'street 1'\n    assert address\n",
+        encoding="utf-8",
+    )
+
+    found = find_related_tests(source, [_make_target("add")], repo, ["tests"])
+
+    assert found == []
+
+
 def test_returns_empty_list_when_no_tests(tmp_path: Path) -> None:
     repo = tmp_path
     (repo / "examples").mkdir()
