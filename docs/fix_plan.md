@@ -47,6 +47,6 @@ after each. No pushes, no deploys without explicit permission.
 
 ## Wrap-up
 
-- [ ] Refresh docs made stale by the fixes (RU guide: B3 global-vars note,
+- [x] Refresh docs made stale by the fixes (RU guide: B3 global-vars note,
       A5 known-gap note, deploy.sh status; this file's checkboxes).
-- [ ] Full test suite green; summarize what changed and remaining risks.
+- [x] Full test suite green; summarize what changed and remaining risks.
