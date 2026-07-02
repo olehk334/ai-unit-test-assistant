@@ -34,7 +34,7 @@ after each. No pushes, no deploys without explicit permission.
       small `_CacheDeltaCounter` (still concurrency=1 by design).
 - [x] **B4** Receiver: reuse one lazily created Pub/Sub publisher instead of
       a client per request.
-- [ ] **B5+B8** CLI: drop `_build_config` pass-through (each command builds
+- [x] **B5+B8** CLI: drop `_build_config` pass-through (each command builds
       its own overrides dict); `--dry-run/--no-dry-run` tri-state so the CLI
       can override a config-file `dry_run: true`.
 - [ ] **B6** Remove the extra header from the dry-run template (files were

@@ -8,7 +8,7 @@ from typing import Optional
 
 import typer
 
-from .config import AppConfig, load_config
+from .config import load_config
 from .pipeline import (
     apply_suggested_updates,
     run_generate_tests_for_file,
@@ -24,35 +24,6 @@ app = typer.Typer(
 )
 
 
-def _build_config(
-    base_ref: Optional[str],
-    output_dir: Optional[Path],
-    suggestions_dir: Optional[Path],
-    report: Optional[Path],
-    repair_attempts: Optional[int],
-    dry_run: Optional[bool],
-    update_existing_tests: Optional[bool],
-    config_file: Optional[Path],
-) -> AppConfig:
-    overrides: dict[str, object] = {}
-    if base_ref is not None:
-        overrides["base_ref"] = base_ref
-    if output_dir is not None:
-        overrides["output_dir"] = output_dir
-    if suggestions_dir is not None:
-        overrides["suggestions_dir"] = suggestions_dir
-    if report is not None:
-        overrides["report_path"] = report
-    if repair_attempts is not None:
-        overrides["repair_attempts"] = repair_attempts
-    if dry_run is not None:
-        overrides["dry_run"] = dry_run
-    if update_existing_tests is not None:
-        overrides["update_existing_tests"] = update_existing_tests
-
-    return load_config(config_path=config_file, cli_overrides=overrides)
-
-
 @app.command("generate-tests")
 def generate_tests_command(
     source: Path = typer.Option(..., "--source", help="Source Python file."),
@@ -62,24 +33,25 @@ def generate_tests_command(
     repair_attempts: Optional[int] = typer.Option(
         None, "--repair-attempts", help="Number of repair attempts."
     ),
-    dry_run: bool = typer.Option(
-        False, "--dry-run", help="Skip LLM calls and use a placeholder response."
+    dry_run: Optional[bool] = typer.Option(
+        None,
+        "--dry-run/--no-dry-run",
+        help="Skip LLM calls and use a placeholder response.",
     ),
     config_file: Optional[Path] = typer.Option(
         None, "--config", help="Path to ai-test-assistant.yml."
     ),
 ) -> None:
     """Generate pytest tests for a single source file."""
-    cfg = _build_config(
-        base_ref=None,
-        output_dir=output_dir,
-        suggestions_dir=None,
-        report=None,
-        repair_attempts=repair_attempts,
-        dry_run=dry_run if dry_run else None,
-        update_existing_tests=None,
-        config_file=config_file,
-    )
+    overrides: dict[str, object] = {}
+    if output_dir is not None:
+        overrides["output_dir"] = output_dir
+    if repair_attempts is not None:
+        overrides["repair_attempts"] = repair_attempts
+    if dry_run is not None:
+        overrides["dry_run"] = dry_run
+
+    cfg = load_config(config_path=config_file, cli_overrides=overrides)
     result = asyncio.run(run_generate_tests_for_file(cfg, source.resolve()))
     typer.echo(f"Status: {result.status}")
     if result.generated_test_file:
@@ -110,8 +82,10 @@ def run_pr_assistant_command(
     repair_attempts: Optional[int] = typer.Option(
         None, "--repair-attempts", help="Number of repair attempts."
     ),
-    dry_run: bool = typer.Option(
-        False, "--dry-run", help="Skip LLM calls and use a placeholder response."
+    dry_run: Optional[bool] = typer.Option(
+        None,
+        "--dry-run/--no-dry-run",
+        help="Skip LLM calls and use a placeholder response.",
     ),
     update_existing_tests: Optional[bool] = typer.Option(
         None,
@@ -123,17 +97,23 @@ def run_pr_assistant_command(
     ),
 ) -> None:
     """Detect changed files and generate/suggest tests for them."""
-    cfg = _build_config(
-        base_ref=base_ref,
-        output_dir=output_dir,
-        suggestions_dir=suggestions_dir,
-        report=report,
-        repair_attempts=repair_attempts,
-        dry_run=dry_run if dry_run else None,
-        update_existing_tests=update_existing_tests,
-        config_file=config_file,
-    )
+    overrides: dict[str, object] = {}
+    if base_ref is not None:
+        overrides["base_ref"] = base_ref
+    if output_dir is not None:
+        overrides["output_dir"] = output_dir
+    if suggestions_dir is not None:
+        overrides["suggestions_dir"] = suggestions_dir
+    if report is not None:
+        overrides["report_path"] = report
+    if repair_attempts is not None:
+        overrides["repair_attempts"] = repair_attempts
+    if dry_run is not None:
+        overrides["dry_run"] = dry_run
+    if update_existing_tests is not None:
+        overrides["update_existing_tests"] = update_existing_tests
 
+    cfg = load_config(config_path=config_file, cli_overrides=overrides)
     result = asyncio.run(run_pr_assistant(cfg))
     typer.echo(
         f"Changed files: {len(result.changed_files)}  "
@@ -162,7 +142,7 @@ def apply_suggestions_command(
 
     Each file under ``--suggestions-dir`` is written to the same relative path
     under ``--repo-root`` (defaults to the current working directory),
-    overwriting any existing file.
+    overwriting any existing file. Only test files are applied.
     """
     root = (repo_root or Path.cwd()).resolve()
     src_dir = (
