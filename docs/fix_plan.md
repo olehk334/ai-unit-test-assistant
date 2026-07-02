@@ -13,7 +13,7 @@ after each. No pushes, no deploys without explicit permission.
       (`examples/calculator.py` → `test_examples_calculator_generated.py`)
       so same-stem sources cannot collide. Update README naming mentions
       here and in the calculator demo repo. Tests.
-- [ ] **A3** `post_commit_status` becomes best-effort: network failure logs
+- [x] **A3** `post_commit_status` becomes best-effort: network failure logs
       a warning instead of failing the job (docs already promise this). Test.
 - [ ] **A4** `infra/deploy.sh`: replace non-existent
       `gcloud builds submit --file` with per-service cloudbuild configs.

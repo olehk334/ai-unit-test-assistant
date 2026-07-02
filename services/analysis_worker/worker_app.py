@@ -21,12 +21,12 @@ so scaling happens by adding instances, not threads.
 
 from __future__ import annotations
 
-import asyncio
 import base64
 import binascii
 import json
 import os
 import subprocess
+import sys
 import tempfile
 import urllib.request
 from pathlib import Path
@@ -205,6 +205,9 @@ def summarize_for_commit_status(result: PipelineResult) -> tuple[str, str]:
 def post_commit_status(
     job: dict[str, Any], state: str, description: str, target_url: str | None
 ) -> None:
+    """Best-effort: the artifacts are already uploaded, so a GitHub hiccup
+    must not fail the job (a retry would be skipped by idempotency and the
+    status would never be posted anyway)."""
     token = os.environ.get("GITHUB_TOKEN")
     if not token:
         return
@@ -229,8 +232,14 @@ def post_commit_status(
         },
         method="POST",
     )
-    with urllib.request.urlopen(request, timeout=30):
-        pass
+    try:
+        with urllib.request.urlopen(request, timeout=30):
+            pass
+    except OSError as exc:
+        print(
+            f"warning: commit status for {artifact_prefix(job)} not posted: {exc}",
+            file=sys.stderr,
+        )
 
 
 async def process_job(job: dict[str, Any]) -> PipelineResult:

@@ -109,6 +109,20 @@ class TestPubsubEndpoint:
         assert "processed" in response.text
 
 
+def test_commit_status_failure_does_not_raise(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("GITHUB_TOKEN", "token")
+
+    def failing_urlopen(*args, **kwargs):
+        raise OSError("github unreachable")
+
+    monkeypatch.setattr(worker_app.urllib.request, "urlopen", failing_urlopen)
+
+    # Must not raise: artifacts are already uploaded, status is best-effort.
+    worker_app.post_commit_status(_job(), "success", "all good", None)
+
+
 def test_metrics_endpoint_exposes_job_counters(client: TestClient) -> None:
     # A malformed message still counts as a job outcome.
     client.post("/pubsub", json={"message": {"data": "%%%"}})
