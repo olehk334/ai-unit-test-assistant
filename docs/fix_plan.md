@@ -15,7 +15,7 @@ after each. No pushes, no deploys without explicit permission.
       here and in the calculator demo repo. Tests.
 - [x] **A3** `post_commit_status` becomes best-effort: network failure logs
       a warning instead of failing the job (docs already promise this). Test.
-- [ ] **A4** `infra/deploy.sh`: replace non-existent
+- [x] **A4** `infra/deploy.sh`: replace non-existent
       `gcloud builds submit --file` with per-service cloudbuild configs.
       `bash -n` syntax check (cannot run for real without cloud).
 - [ ] **A5** `import_graph`: `from package import module` must create an

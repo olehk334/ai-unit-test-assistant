@@ -1,0 +1,14 @@
+# Build the webhook receiver image. Invoked by infra/deploy.sh:
+#   gcloud builds submit --config infra/cloudbuild-receiver.yaml \
+#     --substitutions "_IMAGE=<region>-docker.pkg.dev/<project>/<repo>/webhook-receiver" .
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - services/webhook_receiver/Dockerfile
+      - -t
+      - ${_IMAGE}
+      - .
+images:
+  - ${_IMAGE}

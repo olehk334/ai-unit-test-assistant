@@ -37,10 +37,12 @@ gcloud artifacts repositories create "${REPO}" \
 IMAGE_BASE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}"
 
 # --- Build images (from the repository root) ---------------------------------
-gcloud builds submit --tag "${IMAGE_BASE}/webhook-receiver" \
-  --file services/webhook_receiver/Dockerfile .
-gcloud builds submit --tag "${IMAGE_BASE}/analysis-worker" \
-  --file services/analysis_worker/Dockerfile .
+# `gcloud builds submit --tag` cannot point at a custom Dockerfile path,
+# so each service has a small Cloud Build config that can.
+gcloud builds submit --config infra/cloudbuild-receiver.yaml \
+  --substitutions "_IMAGE=${IMAGE_BASE}/webhook-receiver" .
+gcloud builds submit --config infra/cloudbuild-worker.yaml \
+  --substitutions "_IMAGE=${IMAGE_BASE}/analysis-worker" .
 
 # --- Pub/Sub topics -----------------------------------------------------------
 gcloud pubsub topics describe "${TOPIC}" 2>/dev/null || \

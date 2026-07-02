@@ -1,0 +1,14 @@
+# Build the analysis worker image. Invoked by infra/deploy.sh:
+#   gcloud builds submit --config infra/cloudbuild-worker.yaml \
+#     --substitutions "_IMAGE=<region>-docker.pkg.dev/<project>/<repo>/analysis-worker" .
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - services/analysis_worker/Dockerfile
+      - -t
+      - ${_IMAGE}
+      - .
+images:
+  - ${_IMAGE}
