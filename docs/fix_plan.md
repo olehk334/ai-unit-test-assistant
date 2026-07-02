@@ -30,7 +30,7 @@ after each. No pushes, no deploys without explicit permission.
       tests stop passing `source_file=None` into `FileResult`.
 - [x] **B2** `load_config` docstring states the .env side effect on
       `os.environ`.
-- [ ] **B3** Worker cache-delta tracking: replace `global` counters with a
+- [x] **B3** Worker cache-delta tracking: replace `global` counters with a
       small `_CacheDeltaCounter` (still concurrency=1 by design).
 - [ ] **B4** Receiver: reuse one lazily created Pub/Sub publisher instead of
       a client per request.

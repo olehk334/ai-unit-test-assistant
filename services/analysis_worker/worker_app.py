@@ -146,23 +146,36 @@ async def run_assistant_on_clone(
     return result, llm.usage
 
 
-# The shared cache counts cumulatively; Prometheus counters take deltas.
-_last_cache_hits = 0
-_last_cache_misses = 0
+class CacheDeltaCounter:
+    """Turn the shared cache's cumulative hit/miss counts into per-job deltas
+    for Prometheus counters. Correct under the worker's concurrency=1 model;
+    concurrent jobs would need a lock around ``take``."""
+
+    def __init__(self, cache: LRUCache):
+        self._cache = cache
+        self._seen_hits = 0
+        self._seen_misses = 0
+
+    def take(self) -> tuple[int, int]:
+        hit_delta = self._cache.hits - self._seen_hits
+        miss_delta = self._cache.misses - self._seen_misses
+        self._seen_hits = self._cache.hits
+        self._seen_misses = self._cache.misses
+        return hit_delta, miss_delta
+
+
+CACHE_DELTAS = CacheDeltaCounter(RESPONSE_CACHE)
 
 
 def record_job_metrics(result: PipelineResult, usage: LlmUsageStats) -> None:
-    global _last_cache_hits, _last_cache_misses
-
     LLM_CALLS.inc(usage.calls)
     LLM_SECONDS.inc(usage.total_seconds)
     LLM_PROMPT_TOKENS.inc(usage.prompt_tokens)
     LLM_RESPONSE_TOKENS.inc(usage.response_tokens)
 
-    CACHE_HITS.inc(RESPONSE_CACHE.hits - _last_cache_hits)
-    CACHE_MISSES.inc(RESPONSE_CACHE.misses - _last_cache_misses)
-    _last_cache_hits = RESPONSE_CACHE.hits
-    _last_cache_misses = RESPONSE_CACHE.misses
+    hit_delta, miss_delta = CACHE_DELTAS.take()
+    CACHE_HITS.inc(hit_delta)
+    CACHE_MISSES.inc(miss_delta)
 
     for file_result in result.file_results:
         if file_result.generated_test_file is not None:
