@@ -28,7 +28,7 @@ after each. No pushes, no deploys without explicit permission.
 - [x] **B1+B9** Type hygiene: `_generate_and_repair` returns
       `tuple[str, PytestResult | None]`; annotate `changed_file: ChangedFile`;
       tests stop passing `source_file=None` into `FileResult`.
-- [ ] **B2** `load_config` docstring states the .env side effect on
+- [x] **B2** `load_config` docstring states the .env side effect on
       `os.environ`.
 - [ ] **B3** Worker cache-delta tracking: replace `global` counters with a
       small `_CacheDeltaCounter` (still concurrency=1 by design).

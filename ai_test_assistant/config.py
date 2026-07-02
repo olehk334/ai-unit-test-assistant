@@ -87,7 +87,12 @@ def load_config(
     config_path: Path | None = None,
     cli_overrides: dict[str, Any] | None = None,
 ) -> AppConfig:
-    """Load configuration from defaults, file, env, and CLI overrides."""
+    """Load configuration from defaults, file, env, and CLI overrides.
+
+    Side effect: if ``<repo_root>/.env`` exists, its values are loaded into
+    ``os.environ`` (without overriding variables that are already set) so the
+    normal env-var precedence picks them up.
+    """
     root = Path(repo_root or Path.cwd()).resolve()
     cfg = AppConfig(repo_root=root)
 
