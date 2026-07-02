@@ -26,6 +26,7 @@ dev = [
     # lazily by the apps, so they are not needed here).
     "fastapi>=0.115",
     "httpx>=0.27",
+    "prometheus-client>=0.20",
 ]
 
 [project.scripts]

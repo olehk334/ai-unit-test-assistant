@@ -33,10 +33,16 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, Request, Response
+from prometheus_client import (
+    CONTENT_TYPE_LATEST,
+    Counter,
+    Histogram,
+    generate_latest,
+)
 
 from ai_test_assistant.cache import LRUCache
 from ai_test_assistant.config import load_config
-from ai_test_assistant.llm_client import LlmClient
+from ai_test_assistant.llm_client import LlmClient, LlmUsageStats
 from ai_test_assistant.models import PipelineResult
 from ai_test_assistant.pipeline import run_pr_assistant
 
@@ -45,6 +51,24 @@ app = FastAPI(title="ai-test-assistant analysis worker")
 # Process-lifetime cache shared across jobs: a re-pushed branch with unchanged
 # files sends byte-identical prompts, which this turns into free cache hits.
 RESPONSE_CACHE = LRUCache(capacity=256)
+
+JOBS_PROCESSED = Counter(
+    "jobs_processed_total", "Analysis jobs by outcome", ["status"]
+)
+JOB_DURATION = Histogram(
+    "job_duration_seconds",
+    "End-to-end job duration (clone + pipeline + upload)",
+    buckets=(5, 15, 30, 60, 120, 300, 600),
+)
+LLM_CALLS = Counter("llm_calls_total", "LLM generate calls (cache misses)")
+LLM_SECONDS = Counter("llm_seconds_total", "Seconds spent waiting on the LLM")
+LLM_PROMPT_TOKENS = Counter("llm_prompt_tokens_total", "Prompt tokens sent")
+LLM_RESPONSE_TOKENS = Counter("llm_response_tokens_total", "Response tokens received")
+CACHE_HITS = Counter("llm_cache_hits_total", "LLM response cache hits")
+CACHE_MISSES = Counter("llm_cache_misses_total", "LLM response cache misses")
+GENERATED_FILES = Counter(
+    "generated_test_files_total", "Generated test files by pytest outcome", ["result"]
+)
 
 
 class MalformedJob(ValueError):
@@ -110,13 +134,40 @@ def clone_pr_head(job: dict[str, Any], workdir: Path) -> Path:
     return clone_dir
 
 
-async def run_assistant_on_clone(job: dict[str, Any], clone_dir: Path) -> PipelineResult:
+async def run_assistant_on_clone(
+    job: dict[str, Any], clone_dir: Path
+) -> tuple[PipelineResult, LlmUsageStats]:
     config = load_config(
         repo_root=clone_dir,
         cli_overrides={"base_ref": f"origin/{job['base_ref']}"},
     )
     llm = LlmClient(config, response_cache=RESPONSE_CACHE)
-    return await run_pr_assistant(config, llm=llm)
+    result = await run_pr_assistant(config, llm=llm)
+    return result, llm.usage
+
+
+# The shared cache counts cumulatively; Prometheus counters take deltas.
+_last_cache_hits = 0
+_last_cache_misses = 0
+
+
+def record_job_metrics(result: PipelineResult, usage: LlmUsageStats) -> None:
+    global _last_cache_hits, _last_cache_misses
+
+    LLM_CALLS.inc(usage.calls)
+    LLM_SECONDS.inc(usage.total_seconds)
+    LLM_PROMPT_TOKENS.inc(usage.prompt_tokens)
+    LLM_RESPONSE_TOKENS.inc(usage.response_tokens)
+
+    CACHE_HITS.inc(RESPONSE_CACHE.hits - _last_cache_hits)
+    CACHE_MISSES.inc(RESPONSE_CACHE.misses - _last_cache_misses)
+    _last_cache_hits = RESPONSE_CACHE.hits
+    _last_cache_misses = RESPONSE_CACHE.misses
+
+    for file_result in result.file_results:
+        if file_result.generated_test_file is not None:
+            outcome = "passed" if file_result.status == "passed" else "failed"
+            GENERATED_FILES.labels(result=outcome).inc()
 
 
 def upload_artifacts(job: dict[str, Any], clone_dir: Path) -> str | None:
@@ -185,7 +236,8 @@ def post_commit_status(
 async def process_job(job: dict[str, Any]) -> PipelineResult:
     with tempfile.TemporaryDirectory(prefix="ai-test-assistant-") as workdir:
         clone_dir = clone_pr_head(job, Path(workdir))
-        result = await run_assistant_on_clone(job, clone_dir)
+        result, usage = await run_assistant_on_clone(job, clone_dir)
+        record_job_metrics(result, usage)
         artifacts_url = upload_artifacts(job, clone_dir)
         state, description = summarize_for_commit_status(result)
         post_commit_status(job, state, description, artifacts_url)
@@ -197,6 +249,11 @@ def healthz() -> dict[str, str]:
     return {"status": "ok"}
 
 
+@app.get("/metrics")
+def metrics() -> Response:
+    return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
+
+
 @app.post("/pubsub")
 async def handle_pubsub_push(request: Request) -> Response:
     envelope = await request.json()
@@ -204,19 +261,24 @@ async def handle_pubsub_push(request: Request) -> Response:
         job = decode_pubsub_push(envelope)
     except MalformedJob as exc:
         # Retrying a malformed message can never succeed; ack it away.
+        JOBS_PROCESSED.labels(status="ignored").inc()
         return Response(status_code=200, content=f"ignored: {exc}")
 
     if report_already_uploaded(job):
+        JOBS_PROCESSED.labels(status="skipped").inc()
         return Response(
             status_code=200,
             content=f"skipped: {artifact_prefix(job)} already processed",
         )
 
     try:
-        result = await process_job(job)
+        with JOB_DURATION.time():
+            result = await process_job(job)
     except Exception as exc:  # noqa: BLE001 - let Pub/Sub retry, then dead-letter
+        JOBS_PROCESSED.labels(status="failed").inc()
         return Response(status_code=500, content=f"processing failed: {exc}")
 
+    JOBS_PROCESSED.labels(status="processed").inc()
     return Response(
         status_code=200,
         content=json.dumps(

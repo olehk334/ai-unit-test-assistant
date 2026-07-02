@@ -109,6 +109,16 @@ class TestPubsubEndpoint:
         assert "processed" in response.text
 
 
+def test_metrics_endpoint_exposes_job_counters(client: TestClient) -> None:
+    # A malformed message still counts as a job outcome.
+    client.post("/pubsub", json={"message": {"data": "%%%"}})
+
+    response = client.get("/metrics")
+
+    assert response.status_code == 200
+    assert "jobs_processed_total" in response.text
+
+
 class TestCommitStatusSummary:
     def test_failure_when_any_file_failed(self) -> None:
         from ai_test_assistant.models import FileResult

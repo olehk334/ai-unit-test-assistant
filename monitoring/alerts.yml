@@ -1,0 +1,27 @@
+groups:
+  - name: ai-test-assistant
+    rules:
+      - alert: HighJobFailureRate
+        expr: >
+          rate(jobs_processed_total{status="failed"}[15m])
+            / clamp_min(rate(jobs_processed_total[15m]), 1e-9) > 0.2
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "More than 20% of analysis jobs are failing"
+          description: >
+            Check the worker logs and the dead-letter topic; a Gemini outage
+            or a bad deploy are the usual causes.
+
+      - alert: SlowAnalysisJobs
+        expr: >
+          histogram_quantile(0.95, rate(job_duration_seconds_bucket[15m])) > 300
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "p95 job duration above 5 minutes"
+          description: >
+            Jobs are close to the Pub/Sub ack deadline (600s); redeliveries
+            and duplicate work start when they cross it.
