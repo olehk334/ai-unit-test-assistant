@@ -51,7 +51,10 @@ gcloud pubsub topics describe "${DEAD_LETTER_TOPIC}" 2>/dev/null || \
   gcloud pubsub topics create "${DEAD_LETTER_TOPIC}"
 
 # --- Artifacts bucket ----------------------------------------------------------
-gsutil ls -b "gs://${BUCKET}" 2>/dev/null || gsutil mb -l "${REGION}" "gs://${BUCKET}"
+# gcloud storage (not gsutil): gsutil is a separate wrapper that is often
+# missing from Git Bash PATH on Windows, while gcloud storage ships in-CLI.
+gcloud storage buckets describe "gs://${BUCKET}" >/dev/null 2>&1 || \
+  gcloud storage buckets create "gs://${BUCKET}" --location="${REGION}"
 
 # --- Analysis worker (private; only Pub/Sub may call it) ----------------------
 gcloud run deploy analysis-worker \
