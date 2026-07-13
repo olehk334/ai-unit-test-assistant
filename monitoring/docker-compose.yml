@@ -19,6 +19,10 @@ services:
       DRY_RUN: "true"
     ports:
       - "8080:8080"
+    volumes:
+      # The demo target repo, mounted read-only so test jobs can clone it
+      # without GitHub credentials (send_test_job.py uses /repos/calculator).
+      - ../../autoTestRepository/calculator:/repos/calculator:ro
 
   prometheus:
     image: prom/prometheus:v2.53.0
