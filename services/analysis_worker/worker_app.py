@@ -109,28 +109,44 @@ def report_already_uploaded(job: dict[str, Any]) -> bool:
     return blob.exists()
 
 
+def _clone_url_with_token(clone_url: str) -> str:
+    """Inject GITHUB_TOKEN into GitHub HTTPS URLs so private repos clone."""
+    token = os.environ.get("GITHUB_TOKEN")
+    if token and clone_url.startswith("https://github.com/"):
+        return clone_url.replace("https://", f"https://x-access-token:{token}@", 1)
+    return clone_url
+
+
 def clone_pr_head(job: dict[str, Any], workdir: Path) -> Path:
     clone_dir = workdir / "repo"
-    subprocess.run(
-        ["git", "clone", "--quiet", job["clone_url"], str(clone_dir)],
-        check=True,
-        timeout=120,
-        capture_output=True,
-    )
-    # PR refs also cover heads pushed from forks, which a plain clone lacks.
-    subprocess.run(
-        ["git", "-C", str(clone_dir), "fetch", "--quiet", "origin",
-         f"pull/{job['pr_number']}/head"],
-        check=False,
-        timeout=120,
-        capture_output=True,
-    )
-    subprocess.run(
-        ["git", "-C", str(clone_dir), "checkout", "--quiet", job["head_sha"]],
-        check=True,
-        timeout=60,
-        capture_output=True,
-    )
+    try:
+        subprocess.run(
+            ["git", "clone", "--quiet", _clone_url_with_token(job["clone_url"]),
+             str(clone_dir)],
+            check=True,
+            timeout=120,
+            capture_output=True,
+        )
+        # PR refs also cover heads pushed from forks, which a plain clone lacks.
+        subprocess.run(
+            ["git", "-C", str(clone_dir), "fetch", "--quiet", "origin",
+             f"pull/{job['pr_number']}/head"],
+            check=False,
+            timeout=120,
+            capture_output=True,
+        )
+        subprocess.run(
+            ["git", "-C", str(clone_dir), "checkout", "--quiet", job["head_sha"]],
+            check=True,
+            timeout=60,
+            capture_output=True,
+        )
+    except subprocess.CalledProcessError as exc:
+        # Re-raise without exc.cmd: the clone URL may embed the token.
+        raise RuntimeError(
+            f"git failed (exit {exc.returncode}) preparing "
+            f"{job['repo_full_name']}@{job['head_sha']}"
+        ) from None
     return clone_dir
 
 

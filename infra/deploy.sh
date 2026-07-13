@@ -83,6 +83,23 @@ gcloud pubsub subscriptions create pr-analysis-push \
   --dead-letter-topic "${DEAD_LETTER_TOPIC}" \
   --max-delivery-attempts 5
 
+# Dead-lettering and OIDC push run as the Pub/Sub service agent, which needs:
+# publish rights on the DLQ topic, subscribe rights on the source subscription,
+# and permission to mint tokens for the push service account.
+PROJECT_NUMBER="$(gcloud projects describe "${PROJECT_ID}" --format 'value(projectNumber)')"
+PUBSUB_AGENT="service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com"
+gcloud pubsub topics add-iam-policy-binding "${DEAD_LETTER_TOPIC}" \
+  --member "serviceAccount:${PUBSUB_AGENT}" --role roles/pubsub.publisher
+gcloud pubsub subscriptions add-iam-policy-binding pr-analysis-push \
+  --member "serviceAccount:${PUBSUB_AGENT}" --role roles/pubsub.subscriber
+gcloud iam service-accounts add-iam-policy-binding "${PUSH_SA}" \
+  --member "serviceAccount:${PUBSUB_AGENT}" --role roles/iam.serviceAccountTokenCreator
+
+# Pull subscription so dead-lettered jobs can be inspected by hand.
+gcloud pubsub subscriptions describe pr-analysis-dead-letter-sub 2>/dev/null || \
+gcloud pubsub subscriptions create pr-analysis-dead-letter-sub \
+  --topic "${DEAD_LETTER_TOPIC}"
+
 # --- Webhook receiver (public; GitHub must reach it) ---------------------------
 gcloud run deploy webhook-receiver \
   --image "${IMAGE_BASE}/webhook-receiver" \

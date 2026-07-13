@@ -109,6 +109,26 @@ class TestPubsubEndpoint:
         assert "processed" in response.text
 
 
+class TestCloneUrlWithToken:
+    def test_injects_token_for_github_https(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("GITHUB_TOKEN", "tok123")
+        url = worker_app._clone_url_with_token("https://github.com/o/r.git")
+        assert url == "https://x-access-token:tok123@github.com/o/r.git"
+
+    def test_unchanged_without_token(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+        url = worker_app._clone_url_with_token("https://github.com/o/r.git")
+        assert url == "https://github.com/o/r.git"
+
+    def test_unchanged_for_non_github_urls(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("GITHUB_TOKEN", "tok123")
+        assert worker_app._clone_url_with_token("/repos/calculator") == "/repos/calculator"
+
+
 def test_commit_status_failure_does_not_raise(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
