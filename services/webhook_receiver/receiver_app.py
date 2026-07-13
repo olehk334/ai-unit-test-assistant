@@ -71,8 +71,8 @@ def publish_pr_job(job: dict[str, Any]) -> str:
     return future.result(timeout=10)
 
 
-@app.get("/healthz")
-def healthz() -> dict[str, str]:
+@app.get("/health")
+def health() -> dict[str, str]:
     return {"status": "ok"}
 
 

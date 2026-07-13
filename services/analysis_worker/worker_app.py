@@ -282,8 +282,8 @@ async def run_analysis_job(job: dict[str, Any]) -> PipelineResult:
         return result
 
 
-@app.get("/healthz")
-def healthz() -> dict[str, str]:
+@app.get("/health")
+def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
@@ -314,6 +314,12 @@ async def handle_pubsub_push(request: Request) -> Response:
             result = await run_analysis_job(job)
     except Exception as exc:  # noqa: BLE001 - let Pub/Sub retry, then dead-letter
         JOBS_PROCESSED.labels(status="failed").inc()
+        # Pub/Sub discards the response body, so the reason must be logged
+        # here or it is invisible to operators.
+        print(
+            f"error: job {artifact_prefix(job)} failed: {exc}",
+            file=sys.stderr,
+        )
         return Response(status_code=500, content=f"processing failed: {exc}")
 
     JOBS_PROCESSED.labels(status="processed").inc()
