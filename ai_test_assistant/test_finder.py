@@ -6,14 +6,12 @@ import re
 from pathlib import Path
 
 from .models import TestTarget
+from .repo_paths import is_generated_file_name, is_test_file_name, relative_to_repo
 
 
 def _candidate_paths(source_file: Path, repo_root: Path, test_roots: list[str]) -> list[Path]:
     """Return likely test file paths derived from the source file name."""
-    try:
-        rel = source_file.resolve().relative_to(repo_root.resolve())
-    except ValueError:
-        rel = Path(source_file.name)
+    rel = relative_to_repo(source_file, repo_root) or Path(source_file.name)
 
     stem = rel.stem
     candidates: list[Path] = []
@@ -39,9 +37,8 @@ def _scan_for_references(
     test_roots: list[str],
 ) -> list[Path]:
     """Scan test directories for files that import or mention this source."""
-    try:
-        rel = source_file.resolve().relative_to(repo_root.resolve())
-    except ValueError:
+    rel = relative_to_repo(source_file, repo_root)
+    if rel is None:
         return []
 
     module_parts = list(rel.with_suffix("").parts)
@@ -65,8 +62,9 @@ def _scan_for_references(
         if not root.exists():
             continue
         for path in root.rglob("*.py"):
-            name = path.name
-            if not (name.startswith("test_") or name.endswith("_test.py")):
+            # Generated tests are the assistant's own output, not existing tests:
+            # as context they would feed earlier answers back into its prompts.
+            if not is_test_file_name(path.name) or is_generated_file_name(path.name):
                 continue
             try:
                 text = path.read_text(encoding="utf-8", errors="ignore")
@@ -84,21 +82,20 @@ def find_related_tests(
     test_roots: list[str],
 ) -> list[Path]:
     """Return unique existing test files related to ``source_file``."""
-    found: list[Path] = []
-    seen: set[Path] = set()
+    by_name = [
+        candidate
+        for candidate in _candidate_paths(source_file, repo_root, test_roots)
+        if candidate.is_file()
+    ]
+    by_reference = _scan_for_references(source_file, targets, repo_root, test_roots)
+    return list(dict.fromkeys(path.resolve() for path in by_name + by_reference))
 
-    def _add(path: Path) -> None:
-        resolved = path.resolve()
-        if resolved in seen:
-            return
-        seen.add(resolved)
-        found.append(resolved)
 
-    for candidate in _candidate_paths(source_file, repo_root, test_roots):
-        if candidate.exists() and candidate.is_file():
-            _add(candidate)
-
-    for path in _scan_for_references(source_file, targets, repo_root, test_roots):
-        _add(path)
-
-    return found
+def read_test_files(paths: list[Path]) -> dict[Path, str]:
+    contents: dict[Path, str] = {}
+    for path in paths:
+        try:
+            contents[path] = path.read_text(encoding="utf-8")
+        except OSError:
+            continue
+    return contents

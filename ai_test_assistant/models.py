@@ -13,22 +13,19 @@ class ChangedFile:
 
 
 @dataclass
-class FunctionInfo:
+class TestTarget:
+    """A public function or method; ``reason`` says why it was selected for tests."""
+
     name: str
     qualified_name: str
+    target_type: str  # "function" or "method"
     start_line: int
     end_line: int
-    signature: str
     source_code: str
-    is_async: bool = False
+    reason: str = ""
 
-
-@dataclass
-class ClassInfo:
-    name: str
-    start_line: int
-    end_line: int
-    methods: list[FunctionInfo] = field(default_factory=list)
+    # Tell pytest this is not a test class despite the "Test" prefix.
+    __test__ = False
 
 
 @dataclass
@@ -36,20 +33,7 @@ class SourceAnalysis:
     file_path: Path
     module_path: str
     source_code: str
-    functions: list[FunctionInfo] = field(default_factory=list)
-    classes: list[ClassInfo] = field(default_factory=list)
-
-
-@dataclass
-class TestTarget:
-    name: str
-    qualified_name: str
-    target_type: str  # "function" or "method"
-    source_code: str
-    reason: str
-
-    # Tell pytest this is not a test class despite the "Test" prefix.
-    __test__ = False
+    functions: list[TestTarget] = field(default_factory=list)
 
 
 @dataclass
@@ -64,11 +48,11 @@ class PytestResult:
 @dataclass
 class FileResult:
     source_file: Path
+    status: str  # "passed", "failed", "skipped" or "error"
+    message: str = ""
     generated_test_file: Path | None = None
     suggested_test_files: list[Path] = field(default_factory=list)
     pytest_result: PytestResult | None = None
-    status: str = "pending"
-    message: str = ""
 
 
 @dataclass

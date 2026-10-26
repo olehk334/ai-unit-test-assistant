@@ -1,0 +1,1414 @@
+<title>PDP Technology Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Onest:wght@600;700&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>:root {
+  /* Layout: one reading column (max 1000px); figures span it and scroll sideways on phones. */
+  --bg: #fbfbfc; --surface: #f2f3f6; --ink: #1b1e25; --muted: #586073; --rule: #e1e3e9; --accent: #4840ad;
+  --a-fill: #f1efe8; --a-stroke: #8f8b80;
+  --b-fill: #e1f5ee; --b-stroke: #5aa58a; --b-ink: #0b4d3b;
+  --c-fill: #eeedfe; --c-stroke: #8a84df; --c-ink: #26215c;
+  --d-fill: #fafaf9; --d-stroke: #b3b1aa;
+  --hot-fill: #fde7d6; --hot-stroke: #e0875a; --hot-ink: #8a3d10;
+  --line: #8d8d8a; --ok: #2e8b6c; --hot: #d2691e;
+  --font-display: "Onest", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Mono", Consolas, ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111317; --surface: #1a1d23; --ink: #e6e8ee; --muted: #a3a9b8; --rule: #2a2e37; --accent: #aaa5ff;
+    --a-fill: #26251f; --a-stroke: #77736a; --b-fill: #0e2a22; --b-stroke: #2e8b6c; --b-ink: #b7eed8;
+    --c-fill: #1f1c42; --c-stroke: #6b63d4; --c-ink: #dedbff; --d-fill: #16171b; --d-stroke: #575a64;
+    --hot-fill: #3a2414; --hot-stroke: #d2884f; --hot-ink: #ffc9a3; --line: #8a8f9a; --ok: #6fd1aa; --hot: #f0a06a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111317; --surface: #1a1d23; --ink: #e6e8ee; --muted: #a3a9b8; --rule: #2a2e37; --accent: #aaa5ff;
+  --a-fill: #26251f; --a-stroke: #77736a; --b-fill: #0e2a22; --b-stroke: #2e8b6c; --b-ink: #b7eed8;
+  --c-fill: #1f1c42; --c-stroke: #6b63d4; --c-ink: #dedbff; --d-fill: #16171b; --d-stroke: #575a64;
+  --hot-fill: #3a2414; --hot-stroke: #d2884f; --hot-ink: #ffc9a3; --line: #8a8f9a; --ok: #6fd1aa; --hot: #f0a06a;
+  color-scheme: dark;
+}
+body { background: var(--bg); color: var(--ink); font: 16.5px/1.6 var(--font-body); }
+a { color: var(--accent); text-underline-offset: 2px; }
+a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-inline: 20px; padding-block: 10px; background: var(--bg); border-bottom: 1px solid var(--rule); }
+.brand { font: 600 15px var(--font-display); }
+.lang-switch { display: inline-flex; border: 1px solid var(--rule); border-radius: 999px; padding: 3px; gap: 2px; background: var(--surface); }
+.lang-switch button { font: 600 13.5px var(--font-body); color: var(--muted); background: transparent; border: 0; border-radius: 999px; padding: 4px 14px; cursor: pointer; }
+.lang-switch button[aria-selected="true"] { background: var(--bg); color: var(--ink); box-shadow: 0 0 0 1px var(--rule); }
+.page { max-width: 1000px; margin: 0 auto; padding-inline: 20px; padding-block: 8px 72px; }
+.doc-head { padding-block: 28px 8px; }
+.eyebrow { font: 12.5px/1.5 var(--font-mono); color: var(--muted); margin: 0 0 10px; }
+h1 { font: 700 clamp(30px, 4.6vw, 44px)/1.1 var(--font-display); letter-spacing: -0.015em; margin: 0 0 14px; text-wrap: balance; }
+h2 { font: 650 28px/1.2 var(--font-display); letter-spacing: -0.01em; margin: 64px 0 8px; padding-top: 26px; border-top: 2px solid var(--rule); text-wrap: balance; }
+h2 + .part-lead { font-size: 18px; color: var(--muted); margin-bottom: 24px; }
+h3 { font: 650 21px/1.3 var(--font-display); margin: 40px 0 10px; text-wrap: balance; }
+h4 { font: 600 17px/1.3 var(--font-body); margin: 22px 0 6px; }
+p, li { max-width: 74ch; }
+p { margin: 0 0 14px; }
+.lead { font-size: 19px; color: var(--muted); margin-bottom: 18px; }
+.toc { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 14.5px; }
+.toc a { text-decoration: none; }
+.toc a:hover { text-decoration: underline; }
+ul, ol { padding-left: 22px; margin: 0 0 14px; }
+li { margin-bottom: 7px; }
+code { font: 0.86em var(--font-mono); background: var(--surface); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+pre { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 16px; overflow-x: auto; margin: 0 0 16px; }
+pre code { background: none; padding: 0; font: 13px/1.6 var(--font-mono); white-space: pre; }
+.tbl-wrap { overflow-x: auto; margin: 6px 0 18px; }
+table { width: 100%; border-collapse: collapse; font-size: 14.5px; line-height: 1.45; }
+th { text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); border-bottom: 1px solid var(--rule); padding: 8px 10px; }
+td { border-bottom: 1px solid var(--rule); padding: 9px 10px; vertical-align: top; }
+.key { background: var(--surface); border-left: 4px solid var(--accent); border-radius: 6px; padding: 10px 16px; margin: 18px 0; max-width: none; }
+.key p { max-width: none; margin: 0; }
+.project { border: 1px solid var(--b-stroke); background: var(--b-fill); color: var(--ink); border-radius: 8px; padding: 12px 16px 2px; margin: 18px 0; }
+.project .tag { font: 600 11.5px/1.6 var(--font-body); letter-spacing: 0.06em; text-transform: uppercase; color: var(--b-ink); }
+.project p { max-width: none; }
+details { border: 1px solid var(--rule); border-radius: 8px; padding: 8px 14px; margin: 0 0 8px; }
+summary { cursor: pointer; font-weight: 600; }
+details p { margin: 10px 0 4px; max-width: none; }
+.widget { margin: 18px 0 26px; }
+.fig-wrap { overflow-x: auto; }
+svg.fig { display: block; width: 100%; min-width: 720px; height: auto; }
+figcaption, .cap { font-size: 14px; color: var(--muted); margin-top: 6px; }
+.wctrl { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; margin-bottom: 8px; }
+.wlabel { font-size: 14px; color: var(--muted); }
+.wbtn { font: 600 13.5px var(--font-body); color: var(--ink); background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; padding: 5px 12px; cursor: pointer; }
+.wbtn:hover { border-color: var(--accent); }
+.wbtn.on { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+.wslider { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); }
+.wslider input { width: 160px; accent-color: var(--accent); }
+.wval { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.wlog { font-size: 14.5px; color: var(--ink); background: var(--surface); border-radius: 6px; padding: 8px 12px; min-height: 1.6em; margin-top: 6px; }
+/* SVG vocabulary */
+.fig text { font-family: var(--font-body); fill: var(--ink); }
+.bx { stroke-width: 1.2; }
+.tone-a { fill: var(--a-fill); stroke: var(--a-stroke); }
+.tone-b { fill: var(--b-fill); stroke: var(--b-stroke); }
+.tone-c { fill: var(--c-fill); stroke: var(--c-stroke); }
+.tone-d { fill: var(--d-fill); stroke: var(--d-stroke); }
+.tone-hot { fill: var(--hot-fill); stroke: var(--hot-stroke); }
+.bx-t { font-size: 15px; font-weight: 600; }
+.bx-s { font-size: 12.5px; fill: var(--muted); }
+.ln { stroke: var(--line); stroke-width: 1.5; fill: none; }
+.ln.ok { stroke: var(--ok); } .ln.hot { stroke: var(--hot); } .ln.faded { opacity: 0.25; }
+.ah-line { fill: var(--line); } .ah-b { fill: var(--ok); } .ah-hot { fill: var(--hot); }
+.lane { fill: var(--surface); stroke: var(--rule); }
+.lane-t { font-size: 14px; fill: var(--muted); }
+.note { font-size: 13px; fill: var(--muted); }
+.lbl { font-size: 12.5px; fill: var(--muted); } .lbl.hot { fill: var(--hot); } .lbl.ok { fill: var(--ok); }
+.row-t { font-size: 14px; font-weight: 600; }
+.bar { stroke: none; } .bar-t { font-size: 13px; }
+.life { stroke: var(--rule); stroke-width: 1.5; stroke-dasharray: 4 4; }
+.budget { fill: none; stroke: var(--hot-stroke); stroke-dasharray: 5 4; }
+.act { fill: var(--b-fill); stroke: var(--b-stroke); }
+.step { stroke-width: 1.2; } .step.done { fill: var(--b-fill); stroke: var(--b-stroke); } .step.crash { fill: var(--hot-fill); stroke: var(--hot-stroke); }
+.step.todo { fill: var(--d-fill); stroke: var(--d-stroke); stroke-dasharray: 5 4; } .step.skip { fill: var(--surface); stroke: var(--rule); }
+.step-t { font-size: 12.5px; }
+.axis { stroke: var(--rule); stroke-width: 1.5; }
+.tick { font-size: 11.5px; fill: var(--muted); }
+.area { fill: var(--c-fill); opacity: 0.7; }
+.series { fill: none; stroke: var(--accent); stroke-width: 2.2; } .series.ok { stroke: var(--ok); } .series.thin { stroke-width: 1.2; }
+.req { stroke: var(--line); stroke-width: 1.5; } .req.hot { stroke: var(--hot); stroke-dasharray: 4 3; }
+.dot { fill: var(--accent); } .dot.hot { fill: var(--hot); }
+.state { stroke: none; } .state.inactive { fill: var(--surface); } .state.pending { fill: var(--c-stroke); } .state.firing { fill: var(--hot); } .state.cond { fill: var(--b-stroke); }
+.panel { fill: var(--bg); stroke: var(--rule); } .panel-t { font-size: 12.5px; fill: var(--muted); }
+.mono-lbl { font-family: var(--font-mono); font-size: 11.5px; fill: var(--muted); }
+.big { font-family: var(--font-display); font-size: 34px; font-weight: 700; } .big.ok { fill: var(--ok); }
+.op { font-size: 22px; fill: var(--muted); }
+.mono.small { font: 12px/1.5 var(--font-mono); color: var(--muted); white-space: nowrap; overflow: hidden; }
+@media (max-width: 520px) { body { font-size: 16px; } .topbar, .page { padding-inline: 16px; } h2 { font-size: 24px; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+<div class="topbar"><span class="brand">PDP Technology Guide</span><div class="lang-switch" role="tablist" aria-label="Language"><button type="button" role="tab" data-lang="en" aria-selected="true">English</button><button type="button" role="tab" data-lang="ru" aria-selected="false">Русский</button></div></div>
+<main class="page">
+<article id="lang-en" lang="en">
+<header class="doc-head">
+  <p class="eyebrow">AI Unit Test Assistant · PDP topics 6, 7, 8 · study guide · 2026-10-18</p>
+  <h1>PDP Technology Guide</h1>
+  <p class="lead">The three technologies behind the project, explained from first principles with diagrams and small simulators you can step through. Each part ends with questions to test yourself. The AI Unit Test Assistant appears throughout as the worked example.</p>
+  <nav class="toc" aria-label="Contents">
+    <a href="#en-cloud">Part 1 · Distributed systems &amp; cloud</a>
+    <a href="#en-monitoring">Part 2 · Prometheus &amp; Grafana</a>
+    <a href="#en-algorithms">Part 3 · Topological sort, LRU / LFU</a>
+  </nav>
+  <p class="cap">How to read: each part goes concept → mechanism (a picture or a simulator) → cost and trade-offs → where it lives in the project. The interactive figures have buttons and sliders; nothing is saved, so experiment freely.</p>
+</header>
+
+<section id="en-cloud">
+<h2>Part 1 · Distributed Systems &amp; Cloud Architecture</h2>
+<p class="part-lead">What changes when a program becomes several programs on several machines, and the four ideas that make that manageable: microservices, events, serverless, and the patterns for scaling.</p>
+
+<h3 id="en-1-1">1.1 What "distributed" really means</h3>
+<p>On one machine, a function call either returns or crashes, and both are immediate. Across a network, there is a third outcome: <em>you do not know</em>. The request may have been lost, the answer may have been lost, or the other side may still be working. Everything in distributed systems follows from living with that third outcome.</p>
+<p>Three facts you cannot engineer away:</p>
+<ul>
+  <li><strong>Partial failure.</strong> One machine restarts while the others keep going. The system has to make sense in the middle of that.</li>
+  <li><strong>No shared clock, no shared memory.</strong> Two services cannot look at the same variable; they can only send each other messages, and messages take time and can arrive twice or out of order.</li>
+  <li><strong>Latency is a cost.</strong> A function call takes nanoseconds, a network call takes milliseconds, and a cold container takes seconds. Design around the slow parts.</li>
+</ul>
+<div class="key"><p><strong>The one-line rule:</strong> assume every message can be lost, delayed or duplicated, and design so that the system still ends in the right state.</p></div>
+
+<h3 id="en-1-2">1.2 Microservices: split where requirements conflict</h3>
+<p>A microservice is a separately deployed program with one job that talks to others over the network. Splitting has a real price: every boundary adds a network hop, a message format to keep stable, and one more thing to deploy and monitor. So the question is never "how small can a service be?" but "where do requirements conflict so much that one program cannot satisfy both?"</p>
+<p>This project has exactly one such conflict, and so it has exactly two services:</p>
+<div class="widget" data-widget="split"></div>
+<p>GitHub gives a webhook ten seconds to answer and then marks it failed, so the receiver must be tiny and fast and reachable from the internet. The analysis takes minutes and should be reachable by nobody. One program could not be both. Two programs with a queue between them can.</p>
+<p>What the split costs here: a message contract (five JSON fields) that both sides must agree on, and two Docker images instead of one. What it buys: each side can fail, scale and be deployed on its own.</p>
+<div class="key"><p><strong>Rule of thumb:</strong> split along conflicting requirements (latency, exposure, resource needs, release cadence), never along nouns like "user service" and "order service" just because they are different words.</p></div>
+
+<h3 id="en-1-3">1.3 Event-driven systems: talk through messages, not calls</h3>
+<p>In a <em>call</em>, the caller waits for the answer and fails if the callee is down. In an <em>event</em>, the producer writes a message to a topic and moves on; whoever is subscribed receives it when they are ready. The producer does not know who listens, and a consumer that is down simply gets the message later. That decoupling is the whole point.</p>
+<p>Here is one job of this project as a sequence of messages, with the time budgets that shape the design:</p>
+<div class="widget" data-widget="sequence"></div>
+<p>The vocabulary you need:</p>
+<div class="tbl-wrap"><table>
+<thead><tr><th>Term</th><th>Meaning</th><th>In this project</th></tr></thead>
+<tbody>
+<tr><td>Topic</td><td>a named stream producers write to</td><td><code>pr-analysis-jobs</code></td></tr>
+<tr><td>Subscription</td><td>a consumer's view of a topic, with its own delivery state</td><td>one push subscription to the worker</td></tr>
+<tr><td>Push vs pull</td><td>the broker calls the consumer, or the consumer asks the broker</td><td>push: the worker is a plain HTTP service</td></tr>
+<tr><td>Ack</td><td>the consumer confirms the message is done; the broker deletes it</td><td>HTTP 200 from <code>/pubsub</code></td></tr>
+<tr><td>Ack deadline</td><td>how long the broker waits for the ack before redelivering</td><td>600 s</td></tr>
+<tr><td>At-least-once</td><td>a message is never lost, but may be delivered more than once</td><td>the reason the worker is idempotent</td></tr>
+<tr><td>Dead-letter topic</td><td>where a message goes after too many failed deliveries</td><td>after 5 attempts</td></tr>
+</tbody></table></div>
+<p>Every message lives through the same states. Notice that there are two ways out: acknowledged, or parked in the dead-letter topic after five failures. There is no "lost".</p>
+<div class="widget" data-widget="lifecycle"></div>
+
+<h4>Idempotency: why "at least once" is enough</h4>
+<p>Exactly-once delivery across a network is impossible in general: the broker cannot tell whether a consumer that stopped answering had finished the work or not. So brokers promise at-least-once and push the problem to the consumer: processing the same message twice must have the same effect as processing it once. That property is called <strong>idempotency</strong>, and it is usually implemented with a key that identifies the work and a marker that says it was done.</p>
+<p>In this project the key is <code>repo/pr/sha</code> and the marker is the JSON report in Cloud Storage at that path. Pick where the worker crashes and watch what the second delivery does:</p>
+<div class="widget" data-widget="idempotency"></div>
+<div class="project"><p class="tag">In this project</p><p>The receiver publishes; the worker checks for the marker before doing anything, writes it only on success, and answers 500 on any failure so the broker retries. A malformed message is acknowledged immediately: retrying it could never help, and it would otherwise occupy the queue for five attempts.</p></div>
+
+<h3 id="en-1-4">1.4 Serverless: containers that exist only while there is work</h3>
+<p>"Serverless" does not mean no servers; it means you do not manage them. You give the platform a container image and it starts instances when requests arrive, adds more when traffic grows, and stops them all when it goes quiet. You pay for the time instances run.</p>
+<div class="widget" data-widget="serverless"></div>
+<p>Two consequences shape the code:</p>
+<ul>
+  <li><strong>Stateless by construction.</strong> An instance can disappear at any time, so nothing that matters may live only in its memory. State belongs in the queue (what is still to do) and in storage (what was done). The worker's LLM response cache lives in memory on purpose: losing it costs a few repeated calls, never correctness.</li>
+  <li><strong>Cold starts are real.</strong> The first request after idle waits for a container to boot (hundreds of milliseconds to seconds). Fine for a background worker, something to measure for a user-facing API; the usual fix is a minimum number of warm instances, which costs money.</li>
+</ul>
+<div class="project"><p class="tag">In this project</p><p>Both services run on Cloud Run with scale-to-zero. The worker is deployed with <code>concurrency = 1</code>: one request per instance at a time, because the job shells out to git and pytest and would not share a CPU well. More load means more instances, not more threads. The code mirrors that with a lock around each job.</p></div>
+
+<h3 id="en-1-5">1.5 Scalability patterns</h3>
+<h4>Queue-based load levelling</h4>
+<p>Traffic arrives in bursts; work takes a fixed time. Without a queue, a burst either overloads the workers or is rejected. With a queue, the burst waits and is drained at the workers' pace. Try it: raise the burst, then add workers.</p>
+<div class="widget" data-widget="queue"></div>
+<h4>Horizontal scaling</h4>
+<p>Scaling <em>up</em> means a bigger machine; scaling <em>out</em> means more machines. Out is the cloud's natural direction and it needs one thing from you: units of work that do not share state. A job here is one PR at one commit, writing to its own folder, so any number of workers can run side by side.</p>
+<h4>Retries, backoff and the dead-letter queue</h4>
+<p>A retry fixes transient failures (a network blip, a model outage of a minute) and makes permanent failures worse (a job that always crashes would loop forever). So retries are bounded, spaced out with growing delays (<em>backoff</em>), and the message is finally parked where a person can look at it. Five attempts and a dead-letter topic are a typical setting.</p>
+<h4>Idempotent consumers</h4>
+<p>The pattern from 1.3: retries are only safe because doing the work twice is harmless. The marker-before-ack ordering is what makes that true.</p>
+<div class="key"><p><strong>How the four fit together:</strong> the queue absorbs bursts, horizontal scaling drains them, bounded retries handle transient failures, and idempotency makes those retries safe. Remove any one and the others stop being safe.</p></div>
+
+<h3 id="en-1-6">1.6 The three clouds</h3>
+<p>The building blocks have different names on every cloud and the same shapes. Learn the shapes; the names are a lookup.</p>
+<div class="tbl-wrap"><table>
+<thead><tr><th>Shape</th><th>GCP (used here)</th><th>AWS</th><th>Azure</th></tr></thead>
+<tbody>
+<tr><td>Run a container, scale to zero</td><td>Cloud Run</td><td>App Runner, Lambda (container images)</td><td>Container Apps</td></tr>
+<tr><td>Topic + subscriptions</td><td>Pub/Sub</td><td>SNS (topic) + SQS (queue)</td><td>Service Bus topics</td></tr>
+<tr><td>Dead letters</td><td>dead-letter topic</td><td>SQS dead-letter queue</td><td>Service Bus dead-letter queue</td></tr>
+<tr><td>Object storage</td><td>Cloud Storage</td><td>S3</td><td>Blob Storage</td></tr>
+<tr><td>Container images</td><td>Artifact Registry</td><td>ECR</td><td>Container Registry</td></tr>
+<tr><td>Build images from source</td><td>Cloud Build</td><td>CodeBuild</td><td>ACR Tasks</td></tr>
+<tr><td>Service identity and permissions</td><td>IAM service accounts, OIDC push auth</td><td>IAM roles</td><td>Managed Identity</td></tr>
+<tr><td>Managed metrics</td><td>Managed Service for Prometheus</td><td>Amazon Managed Prometheus</td><td>Azure Monitor managed Prometheus</td></tr>
+<tr><td>Managed LLM</td><td>Vertex AI (Gemini)</td><td>Bedrock</td><td>Azure OpenAI</td></tr>
+</tbody></table></div>
+<p>What differs in practice: on AWS the topic and the queue are two products you wire together (SNS fans out, SQS holds); on GCP and Azure one product does both. Identity is the part that is most cloud-specific; everything else moves with a few lines of configuration.</p>
+
+<h3 id="en-1-7">1.7 The whole picture in this project</h3>
+<div class="widget" data-widget="architecture"></div>
+<p>Read it as a story: GitHub signs a webhook; the receiver verifies the signature, filters to the three PR actions that matter, publishes a five-field job and answers in milliseconds. Pub/Sub pushes the job to the worker and keeps it until the worker says 200. The worker clones, runs the eight steps, uploads artifacts to <code>repo/pr/sha/</code>, posts a commit status, and acknowledges. A job that fails five times lands in the dead-letter topic with its own subscription for inspection.</p>
+<p>Verified locally with the Pub/Sub emulator: a signed webhook was queued and processed end to end, and a job with a non-existent base branch was delivered five times and then dead-lettered.</p>
+
+<h3 id="en-1-8">1.8 Check yourself</h3>
+<details><summary>Why is exactly-once delivery impossible, and what do we do instead?</summary><p>After sending a message, the broker cannot distinguish "consumer finished and the ack was lost" from "consumer crashed before finishing". Either way it must redeliver, so delivery is at least once. The consumer makes the duplicate harmless with an idempotency key and a marker written only on success.</p></details>
+<details><summary>What would break if the worker wrote the marker before uploading the artifacts?</summary><p>A crash between the marker and the upload would leave a job marked done with no artifacts, and every retry would skip it. The marker must be the last durable effect, or the retry cannot repair a half-done job.</p></details>
+<details><summary>Why push delivery rather than a worker that pulls?</summary><p>With push the worker is an ordinary HTTP service, scaled by the platform, with no subscriber loop to keep alive. Pull is better when jobs are very long or when the consumer must control its own rate.</p></details>
+<details><summary>Why not make the receiver do the analysis in a background thread?</summary><p>Because a Cloud Run instance may be stopped as soon as it has answered the request; background work in it is not guaranteed to finish. Work that must complete goes through the queue.</p></details>
+<details><summary>Where would you add a metric for queue length?</summary><p>Nowhere in the code: the broker already knows it (<code>num_undelivered_messages</code> in Cloud Monitoring). A metric measured by the worker would be a worse copy of a number the platform already exports.</p></details>
+</section>
+
+<section id="en-monitoring">
+<h2>Part 2 · Monitoring with Prometheus and Grafana</h2>
+<p class="part-lead">How a running service is turned into numbers, how those numbers are stored and queried, and how a dashboard and an alert are built from them.</p>
+
+<h3 id="en-2-1">2.1 Metrics, logs, traces: three different questions</h3>
+<p>Observability is the ability to answer questions about a running system from the outside. The three kinds of data answer three kinds of question, and metrics are the cheapest of the three.</p>
+<div class="widget" data-widget="pillars"></div>
+<p>A metric is a number with a name and a time: <em>at 14:03:05, jobs processed = 8</em>. Thousands of such numbers per second cost almost nothing to store, so metrics are always on, and questions like "how many per minute?" or "what is the slowest 5 %?" are answered in milliseconds. What a metric cannot tell you is <em>which</em> job failed or why; for that you read the log line the worker printed.</p>
+
+<h3 id="en-2-2">2.2 The pull model</h3>
+<p>Prometheus does not wait for services to send data. It keeps a list of targets and asks each one for its current values on a schedule: an HTTP GET to <code>/metrics</code>, which returns a plain text page. The service needs no library beyond a tiny one that formats the page, and it does not need to know that Prometheus exists.</p>
+<div class="widget" data-widget="pull"></div>
+<p>Why pull and not push: Prometheus controls the rate and knows immediately when a target stops answering (the <code>up</code> metric drops to 0), the service cannot flood the monitoring system, and a developer can open <code>/metrics</code> in a browser to see exactly what is being reported. The cost is that Prometheus must be able to reach the service; for short-lived batch jobs there is a push gateway, and in the cloud a managed collector scrapes on Prometheus's behalf.</p>
+<p>Each scrape produces one <em>sample</em> per series: (timestamp, value). A <em>series</em> is a metric name plus a set of labels. Prometheus stores samples compressed (about 1–2 bytes each), which is why keeping every 5-second sample for weeks is affordable.</p>
+
+<h3 id="en-2-3">2.3 The metric types</h3>
+<div class="widget" data-widget="types"></div>
+<ul>
+  <li><strong>Counter.</strong> A number that only increases: requests served, jobs failed, tokens sent. Its raw value is rarely interesting (it depends on when the process started); its <em>rate of change</em> is. Everything in this project is a counter except the duration.</li>
+  <li><strong>Gauge.</strong> A number that goes up and down: queue length, memory in use, temperature. You read it directly.</li>
+  <li><strong>Histogram.</strong> Counts observations into cumulative buckets: how many jobs took ≤ 5 s, ≤ 15 s, ≤ 30 s… plus a sum and a count. It is the only type from which you can compute percentiles later, across many instances.</li>
+  <li><strong>Summary.</strong> Percentiles computed inside the service. Precise but not aggregatable across instances; histograms are preferred.</li>
+</ul>
+<h4>Why a counter and not a gauge for "jobs"</h4>
+<p>If the worker reported "jobs in the last minute" as a gauge, a restart would lose the window and two instances could not be added together. A counter is restart-safe (Prometheus detects the reset) and additive (sum the rates of all instances). The rule: if it only ever goes up, make it a counter and let the query do the arithmetic.</p>
+<h4>rate(): from a counter to a speed</h4>
+<p>Move the window and watch what <code>rate()</code> does at the restart in the middle:</p>
+<div class="widget" data-widget="rate"></div>
+<p>A longer window gives a smoother, laggier line; a shorter one reacts faster but is noisy. Alert rules use long windows (15 minutes here) so that one odd scrape cannot fire them; dashboards use shorter ones. The window must contain at least two samples, so with a 5-second scrape interval the minimum useful window is about 15 seconds.</p>
+
+<h3 id="en-2-4">2.4 Labels and the cardinality trap</h3>
+<p>A label splits one metric into several series: <code>jobs_processed_total{status="processed"}</code>, <code>{status="failed"}</code>, and so on. That is how one metric answers "how many failed?" without a second metric. Every distinct combination of label values is a separate series that Prometheus stores and scans, so labels must have <em>few, bounded</em> values: a status (4 values), a cache policy (2 values), an HTTP method. A label whose values are unbounded — a user id, a PR number, a commit SHA — creates a new series per value and will eventually exhaust memory. That mistake is called a cardinality explosion, and it is the most common way to break a Prometheus server.</p>
+<div class="project"><p class="tag">In this project</p><p>Labels: <code>status</code> on jobs (processed, failed, skipped, ignored), <code>result</code> on generated test files (passed, failed), <code>policy</code> on cache counters (lru, lfu). The repository name and PR number are deliberately <em>not</em> labels; they live in the log line and in the Cloud Storage path.</p></div>
+
+<h3 id="en-2-5">2.5 PromQL in five expressions</h3>
+<div class="tbl-wrap"><table>
+<thead><tr><th>Expression</th><th>What it returns</th></tr></thead>
+<tbody>
+<tr><td><code>jobs_processed_total</code></td><td>an <em>instant vector</em>: the latest value of every series with that name</td></tr>
+<tr><td><code>jobs_processed_total[5m]</code></td><td>a <em>range vector</em>: all samples of the last five minutes, per series; only functions consume it</td></tr>
+<tr><td><code>rate(jobs_processed_total[5m]) * 60</code></td><td>jobs per minute, per status</td></tr>
+<tr><td><code>sum by (status) (rate(…[5m]))</code></td><td>the same, added up across instances but still split by status</td></tr>
+<tr><td><code>histogram_quantile(0.95, sum by (le) (rate(job_duration_seconds_bucket[15m])))</code></td><td>the estimated 95th percentile of job duration</td></tr>
+</tbody></table></div>
+<h4>histogram_quantile: percentiles from buckets</h4>
+<p>A histogram never stores the individual durations, only how many fell below each boundary. To find p95 Prometheus walks the cumulative counts until it passes 95 % of the total, then assumes the observations inside that bucket are spread evenly and interpolates. Move the quantile and see which bucket decides the answer:</p>
+<div class="widget" data-widget="quantile"></div>
+<p>The precision is the width of the bucket, so buckets must be placed where the decisions are. This project's buckets end at 600 s because that is the Pub/Sub ack deadline: the question "are jobs approaching the deadline?" needs resolution near 300 and 600 s, not near 5 s.</p>
+<h4>Vector matching: the bug the project shipped</h4>
+<p>Binary operators (<code>/</code>, <code>+</code>, <code>-</code>) pair series from the left and right sides by their labels. If the label sets differ, the series without a partner simply disappears. That makes ratios easy to get wrong:</p>
+<div class="widget" data-widget="matching"></div>
+<p>The project's alert for "more than 20 % of jobs failing" had exactly this bug: it divided the <code>failed</code> series by every status series and matched only with itself, so the ratio was 1.0 after any single failure. It was found by writing a unit test for the rule, and the fix is <code>sum()</code> on both sides.</p>
+
+<h3 id="en-2-6">2.6 Alert rules: conditions with patience</h3>
+<p>An alert rule is a PromQL expression evaluated on a schedule plus a <code>for:</code> duration. When the expression returns something, the alert becomes <em>pending</em>; only when it has stayed true for the whole <code>for</code> period does it become <em>firing</em>. That one knob removes most false alarms: a short spike never fires.</p>
+<div class="widget" data-widget="alert"></div>
+<p>Prometheus decides <em>that</em> an alert fires. A second program, Alertmanager, decides <em>who hears about it</em>: it groups related alerts, silences known ones, and routes to Slack, email or a pager. The project runs Prometheus with two rules and leaves Alertmanager out, because the rules can be inspected and tested without it.</p>
+<h4>Testing a rule</h4>
+<p>Rules are code and can be unit-tested with <code>promtool test rules</code>: you declare synthetic series (<code>0+9x40</code> means "start at 0, add 9 every step, 40 steps"), an evaluation time, and the alerts you expect. The project's test feeds a 10 % failure rate and expects nothing, then a 50 % rate and expects the alert; the old expression failed the first case.</p>
+<div class="project"><p class="tag">In this project</p><p><code>HighJobFailureRate</code>: more than 20 % failing over 15 minutes, <code>for: 15m</code>. <code>SlowAnalysisJobs</code>: p95 above 300 s for 10 minutes, because at 600 s the ack deadline causes redelivery and duplicate work. Both are in <code>monitoring/alerts.yml</code> with tests in <code>alerts_test.yml</code>.</p></div>
+
+<h3 id="en-2-7">2.7 Grafana: dashboards as code</h3>
+<p>Grafana does not store metrics; it asks Prometheus and draws the answer. A dashboard is a grid of panels, each panel one query plus how to show it (a time series, a single number, a gauge) and a unit. Grafana can load dashboards and data sources from files at start-up, which means the dashboard lives in git next to the code and is identical on every machine.</p>
+<div class="widget" data-widget="dashboard"></div>
+<p>What makes a dashboard useful rather than decorative: the first row answers "is it healthy?" (throughput, errors, latency), the second "what does it cost or produce?" (tokens, pass ratio), and every panel has a unit. Six panels that each answer one question beat thirty that answer none.</p>
+<div class="project"><p class="tag">In this project</p><p><code>monitoring/docker-compose.yml</code> starts the worker in dry-run mode, Prometheus with the scrape config and rules, and Grafana with the data source and dashboard provisioned from <code>monitoring/grafana/</code>. <code>python send_test_job.py --repeat 5</code> creates traffic. The same <code>/metrics</code> endpoint works unchanged with Google's managed Prometheus on Cloud Run.</p></div>
+
+<h3 id="en-2-8">2.8 Check yourself</h3>
+<details><summary>Why does a counter restart not corrupt rate()?</summary><p>Prometheus treats any decrease in a counter as a reset and adds the increase before the reset to the increase after it. The only thing lost is whatever happened between the last scrape and the restart.</p></details>
+<details><summary>When is a gauge the right type?</summary><p>When the value itself is the answer and it can go down: queue length, memory, number of busy workers. If you find yourself wanting the rate of a gauge, it probably should have been a counter.</p></details>
+<details><summary>What is wrong with a label for the PR number?</summary><p>Unbounded values: every PR creates a new series forever. Put the PR number in the log line and in the artifact path instead.</p></details>
+<details><summary>Why sum by (le) before histogram_quantile?</summary><p>Each instance exports its own bucket series. Adding them per bucket boundary gives one histogram for the whole service; then the quantile is computed once, correctly, across instances.</p></details>
+<details><summary>What does for: 15m protect against, and what does it cost?</summary><p>It stops a brief spike from paging anyone. The cost is that a real outage is reported 15 minutes late; choose the duration by how fast a human could act anyway.</p></details>
+</section>
+
+<section id="en-algorithms">
+<h2>Part 3 · Topological Sort and the LRU / LFU Caches</h2>
+<p class="part-lead">Two classic algorithms you can run by hand below: one orders work that depends on other work, the other decides what to forget when memory is full.</p>
+
+<h3 id="en-3-1">3.1 Dependencies are a graph</h3>
+<p>Whenever "A must happen before B", you have a directed edge A → B. Files that import each other, build steps, database migrations, courses with prerequisites, tasks in a schedule: all are directed graphs. A valid order of doing things is one where every edge points forward. Such an order exists only if the graph has no cycle, and a graph without cycles is called a <em>DAG</em> (directed acyclic graph).</p>
+<p>Two ideas carry the whole topic: the <strong>in-degree</strong> of a node is how many edges point into it, which is to say how many things it still waits for; a node with in-degree 0 can go right now.</p>
+
+<h3 id="en-3-2">3.2 Kahn's algorithm, step by step</h3>
+<ol>
+  <li>Count the in-degree of every node.</li>
+  <li>Put every node with in-degree 0 into a ready queue.</li>
+  <li>Take a node from the queue, emit it, and for each edge out of it lower the target's in-degree by one; a target that reaches 0 joins the queue.</li>
+  <li>Repeat until the queue is empty.</li>
+</ol>
+<p>Press <em>Step</em> and watch the in-degrees fall. Then switch to the example with a cycle and see what happens when the queue runs dry early:</p>
+<div class="widget" data-widget="kahn"></div>
+<p>Two properties fall out of the procedure for free:</p>
+<ul>
+  <li><strong>Cycle detection.</strong> If nodes remain when the queue is empty, each of them still waits for something, and that something waits for them: they are in a cycle or downstream of one. No extra bookkeeping needed.</li>
+  <li><strong>Deterministic ties.</strong> When several nodes are ready at once, any of them is a valid next choice. Taking them from a plain queue gives one valid order; taking the one with the smallest original position (a min-heap keyed by position) gives the <em>same</em> order on every run, which matters for reproducible output.</li>
+</ul>
+<h4>Cost</h4>
+<p>Every node enters and leaves the queue once, and every edge is looked at once when its source is emitted: O(V + E) with a plain queue. The heap adds a logarithm, O((V + E) log V), to buy the stable tie-break. For a pull request with a handful of files this is microseconds either way; the point of knowing the cost is knowing what you traded for the determinism.</p>
+<h4>The other way: depth-first search</h4>
+<p>You can also topologically sort by running a depth-first search and listing nodes in the reverse of the order in which they are finished. It needs the same O(V + E) and detects cycles by meeting a node that is still "in progress". Kahn's version is preferred when you want the ready set explicitly, for example to run independent nodes in parallel: everything in the queue at the same moment can go at once.</p>
+<div class="project"><p class="tag">In this project</p><p><code>import_graph.py</code> builds the graph over the changed files only (imports read with <code>ast</code>, including relative imports), runs Kahn with a min-heap keyed by the file's original position, keeps cycle files in their original order and lists them in the report. The order decides what the report shows first and makes sure a module is processed before any tests exist for its importers.</p></div>
+
+<h3 id="en-3-3">3.3 Caches: remembering what is expensive to recompute</h3>
+<p>A cache is a small, fast store in front of a slow operation. Ask the cache first; on a <em>hit</em> return the stored answer, on a <em>miss</em> do the slow work and store the result. The only interesting decision a cache makes is what to throw away when it is full. That decision is the <em>eviction policy</em>, and the quality of a cache is its <em>hit ratio</em>: hits divided by all lookups.</p>
+<p>Two conditions make caching correct: the same input must always produce the same answer (otherwise a hit returns a stale value), and the key must contain everything that could change the answer. In this project the slow operation is a Gemini call, the key is a hash of model, temperature, system instruction and prompt, and temperature 0 is what makes the first condition true.</p>
+
+<h3 id="en-3-4">3.4 LRU: forget the least recently used</h3>
+<p>LRU bets on <em>temporal locality</em>: what was used a moment ago will probably be used again soon. The classic O(1) design keeps two structures that point at the same nodes: a hash map from key to node, for lookup, and a doubly linked list in order of use, for eviction. A lookup moves its node to the front with two pointer swaps; eviction removes whatever is at the back.</p>
+<p>Capacity is 3 here. Put A, B, C, then get A, then put D, and watch which node is evicted:</p>
+<div class="widget" data-widget="lru"></div>
+<p>The two sentinels, HEAD and TAIL, are a trick that removes every special case: the list is never empty, so inserting at the front and removing at the back never check for null pointers. Python's <code>OrderedDict</code> implements the same structure; the project writes it out to show the mechanism.</p>
+
+<h3 id="en-3-5">3.5 LFU: forget the least frequently used</h3>
+<p>LFU bets on <em>popularity</em>: what has been used many times will be used again, even if not recently. The O(1) design keeps three maps: key → value, key → use count, and use count → the keys at that count in insertion order, plus a pointer to the smallest count. A hit moves the key one bucket up; eviction takes the oldest key from the lowest bucket (so LRU breaks ties within a bucket).</p>
+<p>Same buttons, different policy. Put A, B, C, then get A twice, then put D and E: A survives because it is popular, and the newest keys evict each other:</p>
+<div class="widget" data-widget="lfu"></div>
+<p>LFU's weakness is the mirror of its strength: a key that was hot an hour ago keeps its high count and refuses to leave, while new keys fight over the lowest bucket. Production LFU implementations decay counts over time for that reason.</p>
+
+<h3 id="en-3-6">3.6 Which one wins depends on the workload</h3>
+<p>Run both policies on two access patterns. The first is "a developer re-pushes a branch": the same few prompts come back in bursts. The second is "a shared module appears in most PRs": one hot key among many one-off keys.</p>
+<div class="widget" data-widget="race"></div>
+<p>There is no best policy, only a best policy for a workload. That is why the project makes the policy a one-line setting and exports the hit ratio per policy: the question can be answered on the dashboard with real jobs instead of being argued about.</p>
+<div class="project"><p class="tag">In this project</p><p><code>cache.py</code> holds both classes with hit and miss counters. <code>llm_client.py</code> looks the prompt up before calling Gemini. The worker owns one 256-entry cache for the whole process and chooses the class from <code>LLM_CACHE_POLICY</code> (<code>lru</code> by default). Measured on two identical jobs: 3 misses, then 3 hits and 0 LLM calls, under both policies.</p></div>
+
+<h3 id="en-3-7">3.7 Check yourself</h3>
+<details><summary>Why does Kahn's algorithm detect cycles without extra code?</summary><p>A node in a cycle always has at least one incoming edge from another cycle member that is never emitted, so its in-degree never reaches 0 and it never enters the queue. The leftovers when the queue is empty are exactly those nodes and anything behind them.</p></details>
+<details><summary>Why is the doubly linked list needed? Would a singly linked one do?</summary><p>To move a node to the front you must unlink it, which requires updating its predecessor's pointer. With a singly linked list you would have to walk from the head to find the predecessor: O(n). The back pointer makes it O(1).</p></details>
+<details><summary>What must be in the cache key, and what must not?</summary><p>Everything that changes the answer: model, temperature, instruction, prompt. Nothing that does not: the project once included the clone directory path, so every job had unique keys and the cache never hit. Normalise the input before hashing.</p></details>
+<details><summary>When would LFU clearly beat LRU here?</summary><p>One worker serving many repositories where a few shared modules (say <code>models.py</code>) appear in most PRs: their prompts are hot all day, while each PR's other files are seen once. LRU would flush the hot entries on every burst; LFU keeps them.</p></details>
+<details><summary>Is the hand-written cache thread-safe, and does it matter?</summary><p>No, and not here: the worker handles one job at a time (Cloud Run concurrency 1 plus a lock). A shared cache under real concurrency would need a mutex or lock striping; the limitation is documented rather than solved with a lock nobody needs.</p></details>
+</section>
+
+</article>
+<article id="lang-ru" lang="ru" hidden>
+<header class="doc-head">
+  <p class="eyebrow">Русская версия · AI Unit Test Assistant · темы PDP 6, 7, 8 · учебное пособие · 2026-10-18</p>
+  <h1>PDP Technology Guide</h1>
+  <p class="lead">Три технологии, на которых стоит проект, объяснённые с нуля: со схемами и небольшими симуляторами, которые можно прокликать самому. Каждая часть заканчивается вопросами для самопроверки. AI Unit Test Assistant проходит через весь текст как разобранный пример.</p>
+  <nav class="toc" aria-label="Содержание">
+    <a href="#ru-cloud">Часть 1 · Распределённые системы и облако</a>
+    <a href="#ru-monitoring">Часть 2 · Prometheus и Grafana</a>
+    <a href="#ru-algorithms">Часть 3 · Топологическая сортировка, LRU / LFU</a>
+  </nav>
+  <p class="cap">Как читать: каждая часть идёт от понятия → к механизму (картинка или симулятор) → к цене и компромиссам → к месту в проекте. У интерактивных рисунков есть кнопки и ползунки; ничего не сохраняется, экспериментируйте свободно.</p>
+</header>
+
+<section id="ru-cloud">
+<h2>Часть 1 · Распределённые системы и облачная архитектура</h2>
+<p class="part-lead">Что меняется, когда одна программа становится несколькими программами на нескольких машинах, и четыре идеи, которые делают это управляемым: микросервисы, события, serverless и паттерны масштабирования.</p>
+
+<h3 id="ru-1-1">1.1 Что на самом деле значит «распределённая»</h3>
+<p>На одной машине вызов функции либо возвращает результат, либо падает, и то и другое происходит сразу. Через сеть появляется третий исход: <em>вы не знаете</em>. Запрос мог потеряться, ответ мог потеряться, а другая сторона может всё ещё работать. Всё в распределённых системах вытекает из жизни с этим третьим исходом.</p>
+<p>Три факта, которые нельзя обойти инженерией:</p>
+<ul>
+  <li><strong>Частичный отказ.</strong> Одна машина перезапускается, пока остальные продолжают работать. Система должна иметь смысл посреди этого.</li>
+  <li><strong>Нет общих часов и общей памяти.</strong> Два сервиса не могут смотреть на одну переменную; они могут только слать друг другу сообщения, а сообщения идут не мгновенно, могут прийти дважды или не по порядку.</li>
+  <li><strong>Задержка — это стоимость.</strong> Вызов функции занимает наносекунды, сетевой вызов — миллисекунды, холодный контейнер — секунды. Проектируйте вокруг медленных частей.</li>
+</ul>
+<div class="key"><p><strong>Правило в одну строку:</strong> считайте, что любое сообщение может потеряться, задержаться или прийти дважды, и проектируйте так, чтобы система всё равно пришла в правильное состояние.</p></div>
+
+<h3 id="ru-1-2">1.2 Микросервисы: делить там, где конфликтуют требования</h3>
+<p>Микросервис — отдельно разворачиваемая программа с одной задачей, которая говорит с другими по сети. У разделения есть настоящая цена: каждая граница добавляет сетевой переход, формат сообщения, который надо держать стабильным, и ещё одну вещь, которую нужно разворачивать и мониторить. Поэтому вопрос никогда не «насколько маленьким может быть сервис?», а «где требования конфликтуют настолько, что одна программа не может удовлетворить оба?»</p>
+<p>В этом проекте ровно один такой конфликт, и поэтому ровно два сервиса:</p>
+<div class="widget" data-widget="split"></div>
+<p>GitHub даёт webhook'у десять секунд на ответ, а затем считает его неудачным, поэтому ресивер должен быть крошечным, быстрым и доступным из интернета. Анализ занимает минуты и не должен быть доступен никому. Одна программа не может быть и тем и другим. Две программы с очередью между ними — могут.</p>
+<p>Что разделение стоит здесь: контракт сообщения (пять JSON-полей), о котором обе стороны должны договориться, и два Docker-образа вместо одного. Что оно даёт: каждая сторона может отказывать, масштабироваться и разворачиваться сама по себе.</p>
+<div class="key"><p><strong>Рабочее правило:</strong> делить по конфликтующим требованиям (задержка, доступность извне, ресурсы, частота релизов), и никогда — по существительным вроде «сервис пользователей» и «сервис заказов» только потому, что это разные слова.</p></div>
+
+<h3 id="ru-1-3">1.3 Событийные системы: общаться сообщениями, а не вызовами</h3>
+<p>При <em>вызове</em> вызывающий ждёт ответа и падает, если вызываемый недоступен. При <em>событии</em> производитель пишет сообщение в топик и идёт дальше; подписчики получают его, когда готовы. Производитель не знает, кто слушает, а недоступный потребитель просто получит сообщение позже. В этой развязке весь смысл.</p>
+<p>Вот одна задача этого проекта как последовательность сообщений, с бюджетами времени, которые определяют дизайн:</p>
+<div class="widget" data-widget="sequence"></div>
+<p>Нужный словарь:</p>
+<div class="tbl-wrap"><table>
+<thead><tr><th>Термин</th><th>Значение</th><th>В этом проекте</th></tr></thead>
+<tbody>
+<tr><td>Топик</td><td>именованный поток, в который пишут производители</td><td><code>pr-analysis-jobs</code></td></tr>
+<tr><td>Подписка</td><td>взгляд потребителя на топик со своим состоянием доставки</td><td>одна push-подписка на воркер</td></tr>
+<tr><td>Push и pull</td><td>брокер вызывает потребителя или потребитель спрашивает брокера</td><td>push: воркер — обычный HTTP-сервис</td></tr>
+<tr><td>Ack</td><td>потребитель подтверждает, что сообщение обработано; брокер удаляет его</td><td>HTTP 200 от <code>/pubsub</code></td></tr>
+<tr><td>Дедлайн ack</td><td>сколько брокер ждёт подтверждения перед повторной доставкой</td><td>600 с</td></tr>
+<tr><td>At-least-once</td><td>сообщение никогда не теряется, но может прийти больше одного раза</td><td>причина, по которой воркер идемпотентен</td></tr>
+<tr><td>Dead-letter топик</td><td>куда уходит сообщение после слишком многих неудачных доставок</td><td>после 5 попыток</td></tr>
+</tbody></table></div>
+<p>Каждое сообщение проходит одни и те же состояния. Обратите внимание: выходов два — подтверждено или отложено в dead-letter после пяти неудач. Состояния «потеряно» нет.</p>
+<div class="widget" data-widget="lifecycle"></div>
+
+<h4>Идемпотентность: почему «как минимум один раз» достаточно</h4>
+<p>Доставка ровно один раз через сеть в общем случае невозможна: брокер не может понять, закончил ли работу потребитель, переставший отвечать. Поэтому брокеры обещают at-least-once и перекладывают задачу на потребителя: обработать одно сообщение дважды должно означать то же, что обработать его один раз. Это свойство называется <strong>идемпотентностью</strong>, и обычно оно реализуется ключом, который идентифицирует работу, и маркером, который говорит, что она сделана.</p>
+<p>В этом проекте ключ — <code>repo/pr/sha</code>, а маркер — JSON-отчёт в Cloud Storage по этому пути. Выберите, где падает воркер, и посмотрите, что сделает вторая доставка:</p>
+<div class="widget" data-widget="idempotency"></div>
+<div class="project"><p class="tag">В этом проекте</p><p>Ресивер публикует; воркер проверяет маркер до того, как что-либо делать, пишет его только при успехе и отвечает 500 на любую ошибку, чтобы брокер повторил. Повреждённое сообщение подтверждается сразу: повтор ему не помог бы, а иначе оно занимало бы очередь пять попыток.</p></div>
+
+<h3 id="ru-1-4">1.4 Serverless: контейнеры, которые существуют, только пока есть работа</h3>
+<p>«Serverless» не значит «без серверов»; это значит, что вы ими не управляете. Вы отдаёте платформе образ контейнера, а она запускает экземпляры, когда приходят запросы, добавляет новые при росте нагрузки и останавливает все, когда становится тихо. Вы платите за время работы экземпляров.</p>
+<div class="widget" data-widget="serverless"></div>
+<p>Два следствия формируют код:</p>
+<ul>
+  <li><strong>Отсутствие состояния по построению.</strong> Экземпляр может исчезнуть в любой момент, поэтому ничего важного не может жить только в его памяти. Состояние принадлежит очереди (что ещё предстоит) и хранилищу (что сделано). Кэш ответов LLM в воркере живёт в памяти намеренно: его потеря стоит нескольких повторных вызовов, но никогда — корректности.</li>
+  <li><strong>Холодные старты реальны.</strong> Первый запрос после простоя ждёт загрузки контейнера (от сотен миллисекунд до секунд). Для фонового воркера это нормально; для пользовательского API — то, что надо измерять; обычное лекарство — минимальное число тёплых экземпляров, которое стоит денег.</li>
+</ul>
+<div class="project"><p class="tag">В этом проекте</p><p>Оба сервиса работают на Cloud Run с масштабированием до нуля. Воркер развёрнут с <code>concurrency = 1</code>: один запрос на экземпляр за раз, потому что задача вызывает git и pytest и плохо делила бы процессор. Больше нагрузки — больше экземпляров, а не потоков. Код отражает это блокировкой вокруг каждой задачи.</p></div>
+
+<h3 id="ru-1-5">1.5 Паттерны масштабирования</h3>
+<h4>Выравнивание нагрузки очередью</h4>
+<p>Трафик приходит всплесками; работа занимает фиксированное время. Без очереди всплеск либо перегружает воркеры, либо отклоняется. С очередью всплеск ждёт и разбирается в темпе воркеров. Попробуйте: увеличьте всплеск, затем добавьте воркеров.</p>
+<div class="widget" data-widget="queue"></div>
+<h4>Горизонтальное масштабирование</h4>
+<p>Масштабировать <em>вверх</em> — значит взять машину побольше; <em>вширь</em> — взять больше машин. Вширь — естественное направление облака, и оно требует от вас одного: единиц работы, не делящих состояние. Здесь задача — один PR на одном коммите, пишущий в свою папку, так что любое число воркеров может работать рядом.</p>
+<h4>Повторы, backoff и dead-letter очередь</h4>
+<p>Повтор чинит временные сбои (сетевой сбой, минутный простой модели) и усугубляет постоянные (задача, которая всегда падает, крутилась бы вечно). Поэтому повторы ограничены, разнесены растущими паузами (<em>backoff</em>), а сообщение в итоге откладывается туда, где на него посмотрит человек. Пять попыток и dead-letter топик — типичная настройка.</p>
+<h4>Идемпотентные потребители</h4>
+<p>Паттерн из 1.3: повторы безопасны только потому, что сделать работу дважды безвредно. Порядок «маркер до ack» и делает это истинным.</p>
+<div class="key"><p><strong>Как четыре паттерна складываются:</strong> очередь поглощает всплески, горизонтальное масштабирование их разбирает, ограниченные повторы справляются с временными сбоями, а идемпотентность делает эти повторы безопасными. Уберите любой — и остальные перестанут быть безопасными.</p></div>
+
+<h3 id="ru-1-6">1.6 Три облака</h3>
+<p>Строительные блоки на каждом облаке называются по-разному, а устроены одинаково. Учите формы; имена — это справочник.</p>
+<div class="tbl-wrap"><table>
+<thead><tr><th>Форма</th><th>GCP (используется здесь)</th><th>AWS</th><th>Azure</th></tr></thead>
+<tbody>
+<tr><td>Запуск контейнера, масштаб до нуля</td><td>Cloud Run</td><td>App Runner, Lambda (образы контейнеров)</td><td>Container Apps</td></tr>
+<tr><td>Топик + подписки</td><td>Pub/Sub</td><td>SNS (топик) + SQS (очередь)</td><td>Service Bus topics</td></tr>
+<tr><td>Dead letters</td><td>dead-letter топик</td><td>dead-letter очередь SQS</td><td>dead-letter очередь Service Bus</td></tr>
+<tr><td>Объектное хранилище</td><td>Cloud Storage</td><td>S3</td><td>Blob Storage</td></tr>
+<tr><td>Образы контейнеров</td><td>Artifact Registry</td><td>ECR</td><td>Container Registry</td></tr>
+<tr><td>Сборка образов из исходников</td><td>Cloud Build</td><td>CodeBuild</td><td>ACR Tasks</td></tr>
+<tr><td>Идентичность сервисов и права</td><td>сервисные аккаунты IAM, OIDC push auth</td><td>роли IAM</td><td>Managed Identity</td></tr>
+<tr><td>Управляемые метрики</td><td>Managed Service for Prometheus</td><td>Amazon Managed Prometheus</td><td>Azure Monitor managed Prometheus</td></tr>
+<tr><td>Управляемая LLM</td><td>Vertex AI (Gemini)</td><td>Bedrock</td><td>Azure OpenAI</td></tr>
+</tbody></table></div>
+<p>Что отличается на практике: в AWS топик и очередь — два продукта, которые соединяют вручную (SNS разветвляет, SQS хранит); в GCP и Azure это один продукт. Идентичность — самая облачно-специфичная часть; всё остальное переносится несколькими строками конфигурации.</p>
+
+<h3 id="ru-1-7">1.7 Вся картина в этом проекте</h3>
+<div class="widget" data-widget="architecture"></div>
+<p>Читайте как историю: GitHub подписывает webhook; ресивер проверяет подпись, отфильтровывает три действия PR, которые важны, публикует задачу из пяти полей и отвечает за миллисекунды. Pub/Sub доставляет задачу воркеру push'ем и держит её, пока воркер не скажет 200. Воркер клонирует, выполняет восемь шагов, загружает артефакты в <code>repo/pr/sha/</code>, публикует статус коммита и подтверждает. Задача, упавшая пять раз, попадает в dead-letter топик со своей подпиской для разбора.</p>
+<p>Проверено локально с эмулятором Pub/Sub: подписанный webhook прошёл очередь и обработку от начала до конца, а задача с несуществующей базовой веткой была доставлена пять раз и затем отложена в dead-letter.</p>
+
+<h3 id="ru-1-8">1.8 Проверьте себя</h3>
+<details><summary>Почему доставка ровно один раз невозможна и что делают вместо неё?</summary><p>После отправки сообщения брокер не может отличить «потребитель закончил, а ack потерялся» от «потребитель упал, не закончив». В обоих случаях он обязан доставить снова, поэтому доставка — как минимум один раз. Потребитель делает дубликат безвредным ключом идемпотентности и маркером, записываемым только при успехе.</p></details>
+<details><summary>Что сломается, если воркер запишет маркер до загрузки артефактов?</summary><p>Сбой между маркером и загрузкой оставит задачу помеченной как выполненную, но без артефактов, и каждый повтор будет её пропускать. Маркер должен быть последним долговечным эффектом, иначе повтор не сможет починить полусделанную задачу.</p></details>
+<details><summary>Почему push-доставка, а не воркер, который сам забирает?</summary><p>С push воркер — обычный HTTP-сервис, масштабируемый платформой, без цикла подписчика, который нужно поддерживать. Pull лучше, когда задачи очень долгие или потребитель должен сам управлять своим темпом.</p></details>
+<details><summary>Почему не сделать анализ в фоновом потоке ресивера?</summary><p>Потому что экземпляр Cloud Run может быть остановлен, как только он ответил на запрос; фоновая работа в нём не гарантированно завершится. Работа, которая обязана завершиться, идёт через очередь.</p></details>
+<details><summary>Где бы вы добавили метрику длины очереди?</summary><p>Нигде в коде: брокер уже её знает (<code>num_undelivered_messages</code> в Cloud Monitoring). Метрика, измеренная воркером, была бы худшей копией числа, которое платформа и так экспортирует.</p></details>
+</section>
+
+<section id="ru-monitoring">
+<h2>Часть 2 · Мониторинг с Prometheus и Grafana</h2>
+<p class="part-lead">Как работающий сервис превращается в числа, как эти числа хранятся и запрашиваются и как из них строятся дашборд и алерт.</p>
+
+<h3 id="ru-2-1">2.1 Метрики, логи, трейсы: три разных вопроса</h3>
+<p>Наблюдаемость — это возможность отвечать на вопросы о работающей системе снаружи. Три вида данных отвечают на три вида вопросов, и метрики — самый дешёвый из трёх.</p>
+<div class="widget" data-widget="pillars"></div>
+<p>Метрика — число с именем и временем: <em>в 14:03:05 обработано задач = 8</em>. Тысячи таких чисел в секунду почти ничего не стоят в хранении, поэтому метрики включены всегда, а вопросы вроде «сколько в минуту?» или «какие 5 % самые медленные?» решаются за миллисекунды. Чего метрика сказать не может — <em>какая</em> задача упала и почему; для этого читают строку лога, которую напечатал воркер.</p>
+
+<h3 id="ru-2-2">2.2 Pull-модель</h3>
+<p>Prometheus не ждёт, пока сервисы пришлют данные. Он хранит список целей и по расписанию спрашивает у каждой её текущие значения: HTTP GET на <code>/metrics</code>, который возвращает обычную текстовую страницу. Сервису не нужна библиотека сложнее крошечной, которая форматирует страницу, и ему не нужно знать о существовании Prometheus.</p>
+<div class="widget" data-widget="pull"></div>
+<p>Почему pull, а не push: Prometheus управляет частотой и сразу узнаёт, когда цель перестала отвечать (метрика <code>up</code> падает в 0), сервис не может затопить систему мониторинга, а разработчик может открыть <code>/metrics</code> в браузере и увидеть ровно то, что сообщается. Цена — Prometheus должен иметь доступ к сервису; для короткоживущих batch-задач есть push gateway, а в облаке управляемый сборщик скрапит от имени Prometheus.</p>
+<p>Каждый скрап даёт один <em>сэмпл</em> на ряд: (время, значение). <em>Ряд</em> — имя метрики плюс набор меток. Prometheus хранит сэмплы сжатыми (около 1–2 байт каждый), поэтому держать каждый 5-секундный сэмпл неделями — доступно.</p>
+
+<h3 id="ru-2-3">2.3 Типы метрик</h3>
+<div class="widget" data-widget="types"></div>
+<ul>
+  <li><strong>Counter.</strong> Число, которое только растёт: обслуженные запросы, упавшие задачи, отправленные токены. Его сырое значение редко интересно (оно зависит от момента старта процесса); интересна <em>скорость изменения</em>. В этом проекте всё — счётчики, кроме длительности.</li>
+  <li><strong>Gauge.</strong> Число, которое растёт и падает: длина очереди, занятая память, температура. Его читают напрямую.</li>
+  <li><strong>Histogram.</strong> Считает наблюдения по накопительным корзинам: сколько задач заняло ≤ 5 с, ≤ 15 с, ≤ 30 с… плюс сумма и число. Единственный тип, по которому можно потом вычислить перцентили, причём по многим экземплярам сразу.</li>
+  <li><strong>Summary.</strong> Перцентили, вычисленные внутри сервиса. Точно, но не складывается по экземплярам; предпочитают гистограммы.</li>
+</ul>
+<h4>Почему для «задач» счётчик, а не gauge</h4>
+<p>Если бы воркер сообщал «задач за последнюю минуту» как gauge, рестарт терял бы окно, а два экземпляра нельзя было бы сложить. Счётчик безопасен при рестарте (Prometheus обнаруживает сброс) и аддитивен (сложите скорости всех экземпляров). Правило: если оно только растёт — делайте счётчик и оставьте арифметику запросу.</p>
+<h4>rate(): от счётчика к скорости</h4>
+<p>Подвигайте окно и посмотрите, что делает <code>rate()</code> при рестарте посередине:</p>
+<div class="widget" data-widget="rate"></div>
+<p>Длинное окно даёт более гладкую, но запаздывающую линию; короткое реагирует быстрее, но шумит. Правила алертов используют длинные окна (здесь 15 минут), чтобы один странный скрап не мог их сработать; дашборды — покороче. В окне должно быть минимум два сэмпла, так что при интервале 5 секунд минимально полезное окно — около 15 секунд.</p>
+
+<h3 id="ru-2-4">2.4 Метки и ловушка кардинальности</h3>
+<p>Метка делит одну метрику на несколько рядов: <code>jobs_processed_total{status="processed"}</code>, <code>{status="failed"}</code> и так далее. Так одна метрика отвечает «сколько упало?» без второй метрики. Каждая уникальная комбинация значений меток — отдельный ряд, который Prometheus хранит и сканирует, поэтому у меток должно быть <em>мало ограниченных</em> значений: статус (4 значения), политика кэша (2 значения), HTTP-метод. Метка с неограниченными значениями — id пользователя, номер PR, SHA коммита — создаёт новый ряд на каждое значение и рано или поздно исчерпает память. Эта ошибка называется взрывом кардинальности, и это самый частый способ сломать сервер Prometheus.</p>
+<div class="project"><p class="tag">В этом проекте</p><p>Метки: <code>status</code> у задач (processed, failed, skipped, ignored), <code>result</code> у сгенерированных тест-файлов (passed, failed), <code>policy</code> у счётчиков кэша (lru, lfu). Имя репозитория и номер PR намеренно <em>не</em> метки; они живут в строке лога и в пути Cloud Storage.</p></div>
+
+<h3 id="ru-2-5">2.5 PromQL в пяти выражениях</h3>
+<div class="tbl-wrap"><table>
+<thead><tr><th>Выражение</th><th>Что возвращает</th></tr></thead>
+<tbody>
+<tr><td><code>jobs_processed_total</code></td><td><em>мгновенный вектор</em>: последнее значение каждого ряда с этим именем</td></tr>
+<tr><td><code>jobs_processed_total[5m]</code></td><td><em>вектор диапазона</em>: все сэмплы за последние пять минут, по рядам; его потребляют только функции</td></tr>
+<tr><td><code>rate(jobs_processed_total[5m]) * 60</code></td><td>задач в минуту, по статусам</td></tr>
+<tr><td><code>sum by (status) (rate(…[5m]))</code></td><td>то же, сложенное по экземплярам, но всё ещё по статусам</td></tr>
+<tr><td><code>histogram_quantile(0.95, sum by (le) (rate(job_duration_seconds_bucket[15m])))</code></td><td>оценка 95-го перцентиля длительности задачи</td></tr>
+</tbody></table></div>
+<h4>histogram_quantile: перцентили из корзин</h4>
+<p>Гистограмма никогда не хранит отдельные длительности, только сколько их оказалось ниже каждой границы. Чтобы найти p95, Prometheus идёт по накопительным счётчикам, пока не перейдёт 95 % от общего числа, затем считает, что наблюдения внутри этой корзины распределены равномерно, и интерполирует. Подвигайте квантиль и посмотрите, какая корзина решает ответ:</p>
+<div class="widget" data-widget="quantile"></div>
+<p>Точность — ширина корзины, поэтому корзины ставят там, где принимаются решения. Корзины этого проекта заканчиваются на 600 с, потому что это дедлайн ack в Pub/Sub: вопросу «приближаются ли задачи к дедлайну?» нужно разрешение около 300 и 600 с, а не около 5 с.</p>
+<h4>Сопоставление векторов: баг, который был в проекте</h4>
+<p>Бинарные операторы (<code>/</code>, <code>+</code>, <code>-</code>) сопоставляют ряды левой и правой сторон по меткам. Если наборы меток различаются, ряд без пары просто исчезает. Из-за этого доли легко посчитать неверно:</p>
+<div class="widget" data-widget="matching"></div>
+<p>У алерта проекта «более 20 % задач падает» был ровно этот баг: он делил ряд <code>failed</code> на все ряды статусов и сопоставлял только с самим собой, так что доля равнялась 1.0 после любой одной ошибки. Его нашёл юнит-тест правила, а исправление — <code>sum()</code> с обеих сторон.</p>
+
+<h3 id="ru-2-6">2.6 Правила алертов: условия с терпением</h3>
+<p>Правило алерта — выражение PromQL, вычисляемое по расписанию, плюс длительность <code>for:</code>. Когда выражение что-то возвращает, алерт становится <em>pending</em>; только когда он оставался истинным весь период <code>for</code>, он становится <em>firing</em>. Эта одна ручка убирает большинство ложных тревог: короткий всплеск никогда не срабатывает.</p>
+<div class="widget" data-widget="alert"></div>
+<p>Prometheus решает, <em>что</em> алерт горит. Вторая программа, Alertmanager, решает, <em>кто об этом услышит</em>: группирует связанные алерты, заглушает известные и маршрутизирует в Slack, почту или пейджер. Проект запускает Prometheus с двумя правилами и оставляет Alertmanager за рамками, потому что правила можно просмотреть и протестировать без него.</p>
+<h4>Тестирование правила</h4>
+<p>Правила — это код, и их можно юнит-тестировать через <code>promtool test rules</code>: вы объявляете синтетические ряды (<code>0+9x40</code> значит «начать с 0, прибавлять 9 каждый шаг, 40 шагов»), момент вычисления и ожидаемые алерты. Тест проекта подаёт 10 % ошибок и ожидает ничего, затем 50 % и ожидает алерт; старое выражение проваливало первый случай.</p>
+<div class="project"><p class="tag">В этом проекте</p><p><code>HighJobFailureRate</code>: более 20 % ошибок за 15 минут, <code>for: 15m</code>. <code>SlowAnalysisJobs</code>: p95 выше 300 с в течение 10 минут, потому что на 600 с дедлайн ack вызывает повторную доставку и дублирование работы. Оба в <code>monitoring/alerts.yml</code>, тесты в <code>alerts_test.yml</code>.</p></div>
+
+<h3 id="ru-2-7">2.7 Grafana: дашборды как код</h3>
+<p>Grafana не хранит метрики; она спрашивает Prometheus и рисует ответ. Дашборд — сетка панелей, каждая панель — один запрос плюс способ показа (временной ряд, одно число, шкала) и единица измерения. Grafana умеет загружать дашборды и источники данных из файлов при старте, а значит, дашборд живёт в git рядом с кодом и одинаков на каждой машине.</p>
+<div class="widget" data-widget="dashboard"></div>
+<p>Что делает дашборд полезным, а не декоративным: первый ряд отвечает «здорово ли?» (пропускная способность, ошибки, задержка), второй — «сколько стоит и что производит?» (токены, доля прошедших), и у каждой панели есть единица измерения. Шесть панелей, каждая из которых отвечает на один вопрос, лучше тридцати, которые не отвечают ни на один.</p>
+<div class="project"><p class="tag">В этом проекте</p><p><code>monitoring/docker-compose.yml</code> поднимает воркер в dry-run, Prometheus с конфигом сбора и правилами и Grafana с источником данных и дашбордом из <code>monitoring/grafana/</code>. <code>python send_test_job.py --repeat 5</code> создаёт трафик. Тот же эндпоинт <code>/metrics</code> без изменений работает с управляемым Prometheus Google на Cloud Run.</p></div>
+
+<h3 id="ru-2-8">2.8 Проверьте себя</h3>
+<details><summary>Почему рестарт счётчика не портит rate()?</summary><p>Prometheus считает любое уменьшение счётчика сбросом и прибавляет прирост до сброса к приросту после него. Теряется только то, что произошло между последним скрапом и рестартом.</p></details>
+<details><summary>Когда gauge — правильный тип?</summary><p>Когда само значение и есть ответ и оно может падать: длина очереди, память, число занятых воркеров. Если хочется взять rate от gauge, скорее всего это должен был быть счётчик.</p></details>
+<details><summary>Что не так с меткой для номера PR?</summary><p>Неограниченные значения: каждый PR навсегда создаёт новый ряд. Номер PR кладут в строку лога и в путь артефакта.</p></details>
+<details><summary>Зачем sum by (le) перед histogram_quantile?</summary><p>Каждый экземпляр экспортирует свои ряды корзин. Сложение по границам корзин даёт одну гистограмму на весь сервис; затем квантиль вычисляется один раз, корректно, по всем экземплярам.</p></details>
+<details><summary>От чего защищает for: 15m и чего это стоит?</summary><p>Не даёт короткому всплеску никого разбудить. Цена — настоящий сбой будет замечен на 15 минут позже; выбирайте длительность по тому, как быстро человек всё равно мог бы отреагировать.</p></details>
+</section>
+
+<section id="ru-algorithms">
+<h2>Часть 3 · Топологическая сортировка и кэши LRU / LFU</h2>
+<p class="part-lead">Два классических алгоритма, которые ниже можно выполнить вручную: один упорядочивает работу, зависящую от другой работы, второй решает, что забыть, когда память полна.</p>
+
+<h3 id="ru-3-1">3.1 Зависимости — это граф</h3>
+<p>Везде, где «A должно произойти раньше B», есть ориентированное ребро A → B. Файлы, импортирующие друг друга, шаги сборки, миграции базы данных, курсы с пререквизитами, задачи в расписании — всё это ориентированные графы. Правильный порядок выполнения — тот, где каждое ребро смотрит вперёд. Такой порядок существует, только если в графе нет цикла, а граф без циклов называется <em>DAG</em> (directed acyclic graph).</p>
+<p>Всю тему несут две идеи: <strong>in-degree</strong> вершины — сколько рёбер в неё входит, то есть скольких вещей она ещё ждёт; вершина с in-degree 0 может идти прямо сейчас.</p>
+
+<h3 id="ru-3-2">3.2 Алгоритм Кана, шаг за шагом</h3>
+<ol>
+  <li>Посчитать in-degree каждой вершины.</li>
+  <li>Положить каждую вершину с in-degree 0 в очередь готовых.</li>
+  <li>Взять вершину из очереди, выдать её и для каждого ребра из неё уменьшить in-degree цели на единицу; цель, дошедшая до 0, попадает в очередь.</li>
+  <li>Повторять, пока очередь не опустеет.</li>
+</ol>
+<p>Нажимайте <em>Шаг</em> и смотрите, как падают in-degree. Затем переключитесь на пример с циклом и посмотрите, что происходит, когда очередь иссякает раньше времени:</p>
+<div class="widget" data-widget="kahn"></div>
+<p>Два свойства достаются из процедуры бесплатно:</p>
+<ul>
+  <li><strong>Обнаружение циклов.</strong> Если вершины остались, когда очередь пуста, каждая из них всё ещё чего-то ждёт, а то — ждёт их: они в цикле или ниже по потоку от него. Никакого дополнительного учёта.</li>
+  <li><strong>Детерминированные ничьи.</strong> Когда готовы несколько вершин сразу, любая из них — правильный следующий выбор. Брать из обычной очереди — один правильный порядок; брать ту, у которой наименьшая исходная позиция (min-куча по позиции), — <em>тот же самый</em> порядок при каждом запуске, что важно для воспроизводимого результата.</li>
+</ul>
+<h4>Стоимость</h4>
+<p>Каждая вершина входит в очередь и выходит из неё один раз, и каждое ребро просматривается один раз, когда выдаётся его источник: O(V + E) с обычной очередью. Куча добавляет логарифм, O((V + E) log V), покупая стабильный выбор при ничьей. Для pull request с несколькими файлами это микросекунды в любом случае; знать стоимость нужно, чтобы понимать, что отдано за детерминизм.</p>
+<h4>Другой способ: поиск в глубину</h4>
+<p>Топологически отсортировать можно и поиском в глубину, перечислив вершины в обратном порядке их завершения. Это те же O(V + E), а циклы обнаруживаются встречей вершины, которая ещё «в работе». Версию Кана предпочитают, когда нужно явное множество готовых, например чтобы выполнять независимые вершины параллельно: всё, что лежит в очереди в один момент, может идти одновременно.</p>
+<div class="project"><p class="tag">В этом проекте</p><p><code>import_graph.py</code> строит граф только по изменённым файлам (импорты читаются через <code>ast</code>, включая относительные), выполняет Кана с min-кучей по исходной позиции файла, оставляет файлы цикла в исходном порядке и перечисляет их в отчёте. Порядок решает, что отчёт показывает первым, и гарантирует, что модуль обработан до того, как появятся тесты для его импортёров.</p></div>
+
+<h3 id="ru-3-3">3.3 Кэши: запоминать то, что дорого пересчитывать</h3>
+<p>Кэш — маленькое быстрое хранилище перед медленной операцией. Сначала спросите кэш; при <em>попадании</em> верните сохранённый ответ, при <em>промахе</em> выполните медленную работу и сохраните результат. Единственное интересное решение кэша — что выбросить, когда он полон. Это <em>политика вытеснения</em>, а качество кэша — его <em>hit ratio</em>: попадания, делённые на все обращения.</p>
+<p>Два условия делают кэширование корректным: один и тот же вход должен всегда давать тот же ответ (иначе попадание вернёт устаревшее), и ключ должен содержать всё, что может изменить ответ. В этом проекте медленная операция — вызов Gemini, ключ — хеш от модели, temperature, системной инструкции и промпта, а temperature 0 — то, что делает первое условие истинным.</p>
+
+<h3 id="ru-3-4">3.4 LRU: забыть то, что дольше всех не использовалось</h3>
+<p>LRU ставит на <em>временную локальность</em>: что использовали только что, скорее всего, понадобится снова. Классическая O(1)-схема держит две структуры, указывающие на одни узлы: хеш-таблицу от ключа к узлу — для поиска, и двусвязный список в порядке использования — для вытеснения. Обращение переносит узел в начало двумя перестановками указателей; вытеснение убирает то, что в конце.</p>
+<p>Ёмкость здесь 3. Положите A, B, C, затем get A, затем put D и посмотрите, какой узел вытеснится:</p>
+<div class="widget" data-widget="lru"></div>
+<p>Два стража, HEAD и TAIL, — приём, убирающий все особые случаи: список никогда не пуст, поэтому вставка в начало и удаление с конца никогда не проверяют пустые указатели. <code>OrderedDict</code> в Python реализует ту же структуру; проект пишет её явно, чтобы показать механизм.</p>
+
+<h3 id="ru-3-5">3.5 LFU: забыть то, что использовалось реже всех</h3>
+<p>LFU ставит на <em>популярность</em>: что использовали много раз, понадобится снова, даже если не недавно. O(1)-схема держит три таблицы: ключ → значение, ключ → число обращений и число обращений → ключи с этим числом в порядке добавления, плюс указатель на наименьшее число. Попадание переносит ключ на корзину выше; вытеснение берёт самый старый ключ из самой низкой корзины (так LRU разрешает ничьи внутри корзины).</p>
+<p>Те же кнопки, другая политика. Положите A, B, C, затем дважды get A, затем put D и E: A выживает, потому что популярен, а новейшие ключи вытесняют друг друга:</p>
+<div class="widget" data-widget="lfu"></div>
+<p>Слабость LFU — зеркало его силы: ключ, горячий час назад, сохраняет высокий счётчик и отказывается уходить, а новые ключи борются за самую низкую корзину. Промышленные реализации LFU по этой причине со временем уменьшают счётчики.</p>
+
+<h3 id="ru-3-6">3.6 Кто выигрывает, решает нагрузка</h3>
+<p>Прогоните обе политики на двух шаблонах доступа. Первый — «разработчик заново пушит ветку»: те же несколько промптов возвращаются всплесками. Второй — «общий модуль есть в большинстве PR»: один горячий ключ среди многих одноразовых.</p>
+<div class="widget" data-widget="race"></div>
+<p>Лучшей политики нет, есть лучшая политика для нагрузки. Поэтому проект делает политику настройкой в одну строку и экспортирует долю попаданий по политикам: на вопрос можно ответить на дашборде реальными задачами, а не спорить.</p>
+<div class="project"><p class="tag">В этом проекте</p><p><code>cache.py</code> содержит оба класса со счётчиками попаданий и промахов. <code>llm_client.py</code> ищет промпт в кэше перед вызовом Gemini. Воркер владеет одним кэшем на 256 записей на весь процесс и выбирает класс по <code>LLM_CACHE_POLICY</code> (<code>lru</code> по умолчанию). Замерено на двух одинаковых задачах: 3 промаха, затем 3 попадания и 0 вызовов LLM — при обеих политиках.</p></div>
+
+<h3 id="ru-3-7">3.7 Проверьте себя</h3>
+<details><summary>Почему алгоритм Кана обнаруживает циклы без дополнительного кода?</summary><p>У вершины в цикле всегда есть хотя бы одно входящее ребро от другого участника цикла, который никогда не выдаётся, поэтому её in-degree никогда не доходит до 0 и она не попадает в очередь. Остаток при пустой очереди — ровно эти вершины и всё, что за ними.</p></details>
+<details><summary>Зачем нужен двусвязный список? Хватило бы односвязного?</summary><p>Чтобы перенести узел в начало, его нужно отвязать, а для этого обновить указатель предшественника. В односвязном списке пришлось бы идти от головы, чтобы найти предшественника: O(n). Обратный указатель делает это за O(1).</p></details>
+<details><summary>Что должно входить в ключ кэша, а что нет?</summary><p>Всё, что меняет ответ: модель, temperature, инструкция, промпт. Ничего, что не меняет: в проекте однажды в ключ попал путь каталога клона, из-за чего у каждой задачи были уникальные ключи и кэш никогда не срабатывал. Нормализуйте вход перед хешированием.</p></details>
+<details><summary>Когда LFU здесь явно обошёл бы LRU?</summary><p>Один воркер на много репозиториев, где несколько общих модулей (скажем, <code>models.py</code>) есть в большинстве PR: их промпты горячи весь день, а остальные файлы каждого PR встречаются один раз. LRU вымывал бы горячие записи при каждом всплеске; LFU их сохраняет.</p></details>
+<details><summary>Потокобезопасен ли рукописный кэш и важно ли это?</summary><p>Нет, и здесь это не важно: воркер обрабатывает одну задачу за раз (concurrency 1 в Cloud Run плюс блокировка). Общему кэшу под реальной конкурентностью нужен мьютекс или разделение блокировок; ограничение задокументировано, а не закрыто блокировкой, которая никому не нужна.</p></details>
+</section>
+
+</article>
+</main>
+<script>/* Visual engine for the technology guide: static SVG drawings and small simulators.
+   Every widget is a function (mount, lang) and is mounted into each <div data-widget="…">. */
+(function () {
+  "use strict";
+  const NS = "http://www.w3.org/2000/svg";
+  const TONE = { a: "tone-a", b: "tone-b", c: "tone-c", d: "tone-d", hot: "tone-hot" };
+
+  // ---------- SVG helpers ----------
+  function el(tag, attrs, parent) {
+    const node = document.createElementNS(NS, tag);
+    for (const k in attrs) node.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(node);
+    return node;
+  }
+  function wrapWords(str, maxChars) {
+    const words = str.split(" "), lines = [];
+    let line = "";
+    for (const w of words) {
+      if (line && (line + " " + w).length > maxChars) { lines.push(line); line = w; } else line = line ? line + " " + w : w;
+    }
+    if (line) lines.push(line);
+    return lines;
+  }
+  // Long notes wrap onto several lines; the available width follows from the anchor
+  // and position inside the 960-wide figure unless maxW says otherwise.
+  function text(parent, x, y, str, cls, anchor, maxW) {
+    cls = cls || ""; anchor = anchor || "middle";
+    const isNote = /\bnote\b/.test(cls);
+    if (maxW == null && isNote) maxW = anchor === "middle" ? Math.min(x, 960 - x) * 2 - 24 : anchor === "start" ? 950 - x : x - 10;
+    const t = el("text", { x, y, class: cls, "text-anchor": anchor }, parent);
+    if (!maxW) { t.textContent = str; return t; }
+    const perChar = /[Ѐ-ӿ]/.test(str) ? 7.3 : 6.4;
+    const lines = wrapWords(str, Math.max(12, Math.floor(maxW / perChar)));
+    lines.forEach((ln, i) => { const ts = el("tspan", { x, dy: i ? 16 : 0 }, t); ts.textContent = ln; });
+    return t;
+  }
+  let uid = 0;
+  function fig(parent, w, h, label) {
+    const wrap = document.createElement("div");
+    wrap.className = "fig-wrap";
+    parent.appendChild(wrap);
+    const s = el("svg", { viewBox: `0 0 ${w} ${h}`, class: "fig", role: "img", "aria-label": label || "" });
+    s.dataset.uid = String(++uid);
+    const defs = el("defs", {}, s);
+    for (const [id, cls] of [["ah", "ah-line"], ["ah-b", "ah-b"], ["ah-hot", "ah-hot"]]) {
+      const m = el("marker", { id: `${id}-${s.dataset.uid}`, viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: "auto-start-reverse" }, defs);
+      el("path", { d: "M0,0 L10,5 L0,10 z", class: cls }, m);
+    }
+    wrap.appendChild(s);
+    return s;
+  }
+  function box(s, x, y, w, h, title, sub, tone, dashed) {
+    const g = el("g", {}, s);
+    el("rect", { x, y, width: w, height: h, rx: 9, class: "bx " + (tone || TONE.a), "stroke-dasharray": dashed ? "6 5" : "" }, g);
+    text(g, x + w / 2, y + (sub ? h / 2 - 4 : h / 2 + 5), title, "bx-t");
+    if (sub) text(g, x + w / 2, y + h / 2 + 15, sub, "bx-s");
+    return g;
+  }
+  function arrow(s, x1, y1, x2, y2, label, opts) {
+    opts = opts || {};
+    const cls = opts.hot ? "ln hot" : opts.ok ? "ln ok" : "ln";
+    const marker = opts.hot ? "ah-hot" : opts.ok ? "ah-b" : "ah";
+    const d = opts.path || `M${x1},${y1} L${x2},${y2}`;
+    el("path", { d, class: cls, "marker-end": `url(#${marker}-${s.dataset.uid})`, "stroke-dasharray": opts.dashed ? "5 4" : "" }, s);
+    if (label) {
+      const mx = opts.lx != null ? opts.lx : (x1 + x2) / 2, my = opts.ly != null ? opts.ly : (y1 + y2) / 2 - 6;
+      text(s, mx, my, label, "lbl", opts.anchor || "middle");
+    }
+  }
+  function div(parent, cls, html) {
+    const d = document.createElement("div");
+    if (cls) d.className = cls;
+    if (html != null) d.innerHTML = html;
+    parent.appendChild(d);
+    return d;
+  }
+  function button(parent, label, onClick) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "wbtn";
+    b.textContent = label;
+    b.addEventListener("click", onClick);
+    parent.appendChild(b);
+    return b;
+  }
+  function slider(parent, label, min, max, value, step, onInput, fmt) {
+    const wrap = div(parent, "wslider");
+    const id = "sl" + (++uid);
+    const lab = document.createElement("label");
+    lab.htmlFor = id;
+    const val = document.createElement("span");
+    val.className = "wval";
+    const inp = document.createElement("input");
+    inp.type = "range"; inp.id = id; inp.min = min; inp.max = max; inp.step = step || 1; inp.value = value;
+    const render = () => { val.textContent = fmt ? fmt(+inp.value) : inp.value; };
+    inp.addEventListener("input", () => { render(); onInput(+inp.value); });
+    lab.textContent = label + " ";
+    lab.appendChild(val);
+    wrap.appendChild(lab);
+    wrap.appendChild(inp);
+    render();
+    return inp;
+  }
+  const T = (lang, en, ru) => (lang === "ru" ? ru : en);
+
+  const W = {};
+
+  // =====================================================================
+  // D1. Architecture of the cloud mode
+  // =====================================================================
+  W.architecture = function (m, lang) {
+    const s = fig(m, 960, 430, T(lang, "Cloud mode architecture", "Архитектура облачного режима"));
+    el("rect", { x: 10, y: 20, width: 250, height: 390, rx: 12, class: "lane" }, s);
+    el("rect", { x: 280, y: 20, width: 670, height: 390, rx: 12, class: "lane" }, s);
+    text(s, 135, 44, "GitHub", "lane-t");
+    text(s, 615, 44, "Google Cloud", "lane-t");
+    box(s, 40, 70, 190, 64, T(lang, "Pull request", "Pull request"), T(lang, "opened / synchronize", "opened / synchronize"), TONE.a);
+    box(s, 40, 300, 190, 64, T(lang, "Commit status", "Статус коммита"), "ai-test-assistant ✓ / ✗", TONE.a);
+    box(s, 310, 70, 200, 64, "webhook-receiver", T(lang, "Cloud Run · public", "Cloud Run · публичный"), TONE.b);
+    box(s, 560, 70, 170, 64, T(lang, "Topic", "Топик"), "pr-analysis-jobs", TONE.c);
+    box(s, 560, 170, 170, 56, T(lang, "Push subscription", "Push-подписка"), T(lang, "ack 600 s · 5 attempts", "ack 600 с · 5 попыток"), TONE.c);
+    box(s, 770, 170, 160, 56, "Dead-letter", T(lang, "after 5 failures", "после 5 неудач"), TONE.d, true);
+    box(s, 310, 260, 200, 64, "analysis-worker", T(lang, "Cloud Run · private", "Cloud Run · приватный"), TONE.b);
+    box(s, 560, 300, 170, 64, "Cloud Storage", "repo/pr/sha/…", TONE.c);
+    arrow(s, 230, 102, 308, 102, T(lang, "POST /webhook · HMAC", "POST /webhook · HMAC"), { ly: 90 });
+    arrow(s, 510, 102, 558, 102, "publish", { ly: 90 });
+    arrow(s, 645, 134, 645, 168, "", {});
+    arrow(s, 560, 198, 410, 258, T(lang, "push POST /pubsub", "push POST /pubsub"), { path: "M560,198 L410,198 L410,258", lx: 470, ly: 190 });
+    arrow(s, 730, 198, 768, 198, "", { dashed: true });
+    arrow(s, 510, 292, 558, 332, T(lang, "upload report + tests", "загрузка отчёта и тестов"), { path: "M510,300 L540,300 L540,332 L558,332", lx: 600, ly: 285 });
+    arrow(s, 310, 300, 230, 332, T(lang, "POST status", "POST статус"), { path: "M310,300 L270,300 L270,332 L232,332", lx: 262, ly: 288 });
+    text(s, 410, 350, T(lang, "answers 200 = ack · 500 = retry", "ответ 200 = ack · 500 = повтор"), "note");
+    text(s, 410, 370, T(lang, "skips a job whose report already exists", "пропускает задачу, чей отчёт уже есть"), "note");
+    text(s, 645, 395, T(lang, "the folder name is the idempotency key", "имя папки — ключ идемпотентности"), "note");
+  };
+
+  // =====================================================================
+  // D2. Sequence diagram with time budgets
+  // =====================================================================
+  W.sequence = function (m, lang) {
+    const parts = ["GitHub", "receiver", "Pub/Sub", "worker", "Cloud Storage", "GitHub API"];
+    const xs = [80, 250, 420, 590, 760, 910];
+    const s = fig(m, 960, 520, T(lang, "Sequence of one job", "Последовательность одной задачи"));
+    parts.forEach((p, i) => {
+      box(s, xs[i] - 65, 20, 130, 40, p, "", i === 0 || i === 5 ? TONE.a : i === 2 || i === 4 ? TONE.c : TONE.b);
+      el("line", { x1: xs[i], y1: 60, x2: xs[i], y2: 500, class: "life" }, s);
+    });
+    const msg = (i, j, y, label, opts) => arrow(s, xs[i] + (j > i ? 3 : -3), y, xs[j] + (j > i ? -3 : 3), y, label, Object.assign({ ly: y - 11 }, opts || {}));
+    msg(0, 1, 95, T(lang, "POST /webhook (signed body)", "POST /webhook (подписанное тело)"));
+    msg(1, 2, 130, "publish(job)");
+    msg(1, 0, 165, T(lang, "202 Accepted", "202 Accepted"), { ok: true });
+    el("rect", { x: 20, y: 80, width: 300, height: 100, rx: 8, class: "budget" }, s);
+    text(s, 40, 198, T(lang, "budget: 10 s (GitHub webhook timeout), real: ≈ 50 ms", "бюджет: 10 с (таймаут webhook GitHub), реально: ≈ 50 мс"), "note", "start");
+    msg(2, 3, 240, T(lang, "push POST /pubsub (attempt 1)", "push POST /pubsub (попытка 1)"));
+    el("rect", { x: 560, y: 255, width: 60, height: 150, rx: 6, class: "act" }, s);
+    text(s, 640, 275, "git clone + checkout sha", "note", "start");
+    text(s, 640, 295, T(lang, "run the 8 steps (LLM, pytest)", "8 шагов (LLM, pytest)"), "note", "start");
+    msg(3, 4, 330, T(lang, "upload reports/ + tests/", "загрузка reports/ + tests/"));
+    msg(3, 5, 365, "POST /statuses/{sha}");
+    msg(3, 2, 420, T(lang, "200 → message acknowledged", "200 → сообщение подтверждено"), { ok: true });
+    el("rect", { x: 360, y: 225, width: 580, height: 215, rx: 8, class: "budget" }, s);
+    text(s, 380, 458, T(lang, "budget: 600 s ack deadline; no answer → redelivery (up to 5), then dead-letter", "бюджет: 600 с до ack; нет ответа → повторная доставка (до 5), затем dead-letter"), "note", "start");
+    text(s, 380, 478, T(lang, "crash before the upload → the retry redoes everything; after it → the retry is skipped", "сбой до загрузки → повтор делает всё заново; после → повтор пропускается"), "note", "start");
+  };
+
+  // =====================================================================
+  // D3. Why two services: conflicting requirements
+  // =====================================================================
+  W.split = function (m, lang) {
+    const rows = [
+      [T(lang, "must answer within", "должен ответить за"), "10 s", T(lang, "minutes are fine", "минуты — нормально"), 0.03, 1.0],
+      [T(lang, "reachable from", "доступен из"), T(lang, "the internet (GitHub)", "интернета (GitHub)"), T(lang, "Pub/Sub only", "только Pub/Sub"), 1.0, 0.1],
+      [T(lang, "work per request", "работа на запрос"), T(lang, "verify + publish", "проверить + опубликовать"), T(lang, "clone + LLM + pytest", "clone + LLM + pytest"), 0.05, 1.0],
+      [T(lang, "memory", "память"), "≈ 128 MB", "1 GB", 0.15, 1.0],
+      [T(lang, "scales by", "масштабируется"), T(lang, "requests", "запросами"), T(lang, "queue depth", "глубиной очереди"), 0.6, 0.6],
+    ];
+    const s = fig(m, 960, 60 + rows.length * 58 + 30, T(lang, "Conflicting requirements", "Конфликтующие требования"));
+    text(s, 420, 40, "webhook-receiver", "lane-t");
+    text(s, 780, 40, "analysis-worker", "lane-t");
+    rows.forEach((r, i) => {
+      const y = 70 + i * 58;
+      text(s, 20, y + 24, r[0], "row-t", "start");
+      el("rect", { x: 270, y: y, width: 300 * r[3], height: 34, rx: 6, class: "bar tone-b" }, s);
+      text(s, 280, y + 23, r[1], "bar-t", "start");
+      el("rect", { x: 630, y: y, width: 300 * r[4], height: 34, rx: 6, class: "bar tone-c" }, s);
+      text(s, 640, y + 23, r[2], "bar-t", "start");
+    });
+    text(s, 480, 60 + rows.length * 58 + 18, T(lang, "Different needs on every row → two services, one JSON message between them.", "Разные потребности в каждой строке → два сервиса и одно JSON-сообщение между ними."), "note");
+  };
+
+  // =====================================================================
+  // D4. Message lifecycle (state machine)
+  // =====================================================================
+  W.lifecycle = function (m, lang) {
+    const s = fig(m, 960, 300, T(lang, "Life of one message", "Жизнь одного сообщения"));
+    box(s, 20, 110, 150, 60, T(lang, "Published", "Опубликовано"), T(lang, "receiver → topic", "ресивер → топик"), TONE.c);
+    box(s, 230, 110, 170, 60, T(lang, "Delivered", "Доставлено"), T(lang, "attempt n", "попытка n"), TONE.c);
+    box(s, 460, 110, 170, 60, T(lang, "Processing", "Обработка"), T(lang, "worker runs the job", "воркер выполняет задачу"), TONE.b);
+    box(s, 700, 30, 180, 60, T(lang, "Acknowledged", "Подтверждено"), T(lang, "200 → deleted", "200 → удалено"), TONE.b);
+    box(s, 700, 190, 180, 60, "Dead-letter", T(lang, "n = 5 → parked", "n = 5 → отложено"), TONE.d, true);
+    arrow(s, 170, 140, 228, 140, "push");
+    arrow(s, 400, 140, 458, 140, "POST /pubsub");
+    arrow(s, 630, 125, 698, 65, T(lang, "200 or malformed", "200 или битое"), { ok: true, path: "M630,125 L660,125 L660,60 L698,60", lx: 700, ly: 112, anchor: "start" });
+    arrow(s, 630, 155, 698, 215, T(lang, "500, crash, or 600 s silence", "500, сбой или 600 с тишины"), { hot: true, path: "M630,155 L660,155 L660,220 L698,220", lx: 650, ly: 245, anchor: "middle" });
+    arrow(s, 545, 170, 315, 170, T(lang, "redeliver (n < 5), with backoff", "повторная доставка (n < 5), с паузой"), { hot: true, path: "M545,170 L545,250 L315,250 L315,172", lx: 430, ly: 268 });
+    text(s, 480, 20, T(lang, "Pub/Sub delivers at least once: the same message can reach the worker twice.", "Pub/Sub доставляет как минимум один раз: одно сообщение может прийти воркеру дважды."), "note");
+  };
+
+  // =====================================================================
+  // D5. Duplicate delivery and idempotency (interactive)
+  // =====================================================================
+  W.idempotency = function (m, lang) {
+    const steps = [
+      T(lang, "clone the PR", "клонировать PR"), T(lang, "run the 8 steps", "8 шагов"), T(lang, "record metrics", "записать метрики"),
+      T(lang, "upload to GCS", "загрузить в GCS"), T(lang, "post commit status", "статус коммита"), T(lang, "answer 200", "ответить 200"),
+    ];
+    const ctrl = div(m, "wctrl");
+    const lab = div(ctrl, "wlabel", T(lang, "The worker crashes after step:", "Воркер падает после шага:"));
+    let crash = 2;
+    const holder = div(m, "");
+    const draw = () => {
+      holder.innerHTML = "";
+      const s = fig(holder, 960, 300, T(lang, "Two attempts of the same message", "Две попытки одного сообщения"));
+      const drawAttempt = (y, title, lastDone, skipped, note) => {
+        text(s, 20, y - 14, title, "row-t", "start");
+        steps.forEach((st, i) => {
+          const x = 20 + i * 155;
+          const state = skipped ? "skip" : i <= lastDone ? "done" : i === lastDone + 1 ? "crash" : "todo";
+          el("rect", { x, y, width: 140, height: 44, rx: 8, class: "step " + state }, s);
+          text(s, x + 70, y + 27, st, "step-t");
+          if (i < steps.length - 1) arrow(s, x + 140, y + 22, x + 155, y + 22, "");
+        });
+        if (note) text(s, 20, y + 70, note, "note", "start");
+      };
+      drawAttempt(50, T(lang, "Attempt 1", "Попытка 1"), crash, false,
+        T(lang, `No 200 was sent → after the ack deadline Pub/Sub delivers the message again.`, `200 не отправлен → после дедлайна ack Pub/Sub доставляет сообщение снова.`));
+      const uploaded = crash >= 3;
+      drawAttempt(180, T(lang, "Attempt 2", "Попытка 2"), uploaded ? -1 : 5, uploaded, uploaded
+        ? T(lang, "The report already exists at repo/pr/sha → the job is skipped and acknowledged. Nothing is uploaded or posted twice.", "Отчёт уже лежит в repo/pr/sha → задача пропускается и подтверждается. Ничего не загружается и не публикуется дважды.")
+        : T(lang, "No report in GCS yet → the whole job runs again. Attempt 1 left nothing behind, so this is safe.", "Отчёта в GCS ещё нет → задача выполняется заново. Попытка 1 ничего не оставила, так что это безопасно."));
+      text(s, 480, 290, T(lang, "The marker (the JSON report in Cloud Storage) is written only at step 4, so a retry can never half-apply a job.", "Маркер (JSON-отчёт в Cloud Storage) пишется только на шаге 4, поэтому повтор не может применить задачу наполовину."), "note");
+    };
+    steps.forEach((st, i) => {
+      if (i === 5) return;
+      button(ctrl, `${i + 1}`, () => { crash = i; draw(); [...ctrl.querySelectorAll("button")].forEach((b, j) => b.classList.toggle("on", j === i)); });
+    });
+    [...ctrl.querySelectorAll("button")].forEach((b, j) => b.classList.toggle("on", j === crash));
+    draw();
+  };
+
+  // =====================================================================
+  // D6. Queue-based load levelling (simulation)
+  // =====================================================================
+  W.queue = function (m, lang) {
+    const ctrl = div(m, "wctrl");
+    let workers = 2, jobSec = 90, burst = 12;
+    const holder = div(m, "");
+    const run = () => {
+      // 60 simulated minutes, 1 s ticks; steady arrivals 1 PR / 2 min plus a burst at minute 10
+      const total = 3600, arrivals = [];
+      for (let t = 0; t < total; t += 120) arrivals.push(t);
+      for (let k = 0; k < burst; k++) arrivals.push(600 + k * 2);
+      arrivals.sort((a, b) => a - b);
+      let qi = 0, queue = [], busy = [], depth = [], util = [], maxWait = 0, served = 0;
+      for (let t = 0; t < total; t++) {
+        while (qi < arrivals.length && arrivals[qi] <= t) queue.push(arrivals[qi++]);
+        busy = busy.filter(end => end > t);
+        while (busy.length < workers && queue.length) {
+          const start = queue.shift();
+          maxWait = Math.max(maxWait, t - start);
+          busy.push(t + jobSec); served++;
+        }
+        if (t % 10 === 0) { depth.push(queue.length); util.push(busy.length); }
+      }
+      holder.innerHTML = "";
+      const s = fig(holder, 960, 330, T(lang, "Queue depth over one hour", "Глубина очереди за час"));
+      const x0 = 60, y0 = 230, w = 860, h = 180, maxD = Math.max(5, ...depth);
+      el("line", { x1: x0, y1: y0, x2: x0 + w, y2: y0, class: "axis" }, s);
+      el("line", { x1: x0, y1: y0 - h, x2: x0, y2: y0, class: "axis" }, s);
+      for (let mn = 0; mn <= 60; mn += 10) text(s, x0 + w * mn / 60, y0 + 18, mn + " min", "tick");
+      text(s, 14, y0 - h + 4, String(maxD), "tick", "start");
+      text(s, 14, y0 + 4, "0", "tick", "start");
+      const pts = depth.map((d, i) => `${x0 + w * i / (depth.length - 1)},${y0 - h * d / maxD}`).join(" ");
+      el("polygon", { points: `${x0},${y0} ${pts} ${x0 + w},${y0}`, class: "area" }, s);
+      el("polyline", { points: pts, class: "series" }, s);
+      const upts = util.map((u, i) => `${x0 + w * i / (util.length - 1)},${y0 - h * (u / workers) * 0.25}`).join(" ");
+      el("polyline", { points: upts, class: "series ok" }, s);
+      text(s, x0 + w - 4, y0 - h * 0.25 - 6, T(lang, "busy workers (scaled)", "занятые воркеры (масштаб)"), "lbl ok", "end");
+      text(s, x0 + w * 600 / 3600, y0 - h - 8, T(lang, `burst: ${burst} PRs at minute 10`, `всплеск: ${burst} PR на 10-й минуте`), "lbl hot");
+      text(s, 480, 285, T(lang, `queue peak ${Math.max(...depth)} · longest wait ${Math.round(maxWait / 60)} min · ${served} jobs done · steady load 1 PR / 2 min`, `пик очереди ${Math.max(...depth)} · макс. ожидание ${Math.round(maxWait / 60)} мин · ${served} задач · фон 1 PR / 2 мин`), "note");
+      text(s, 480, 310, T(lang, "The queue absorbs the burst; nothing is lost, nothing is overloaded. More workers drain it faster.", "Очередь поглощает всплеск; ничего не теряется и не перегружается. Больше воркеров — быстрее разбор."), "note");
+    };
+    slider(ctrl, T(lang, "workers", "воркеров"), 1, 6, workers, 1, v => { workers = v; run(); });
+    slider(ctrl, T(lang, "job duration", "длительность задачи"), 30, 300, jobSec, 10, v => { jobSec = v; run(); }, v => v + " s");
+    slider(ctrl, T(lang, "burst size", "размер всплеска"), 0, 40, burst, 1, v => { burst = v; run(); }, v => v + " PRs");
+    run();
+  };
+
+  // =====================================================================
+  // D7. Serverless: instances follow traffic
+  // =====================================================================
+  W.serverless = function (m, lang) {
+    const s = fig(m, 960, 300, T(lang, "Scale to zero and cold starts", "Масштаб до нуля и холодные старты"));
+    const x0 = 60, w = 860, y0 = 220;
+    const reqs = [120, 125, 131, 140, 300, 302, 305, 309, 312, 318, 324, 330, 600, 605];
+    el("line", { x1: x0, y1: y0, x2: x0 + w, y2: y0, class: "axis" }, s);
+    for (let t = 0; t <= 720; t += 120) text(s, x0 + w * t / 720, y0 + 18, Math.round(t / 60) + " min", "tick");
+    reqs.forEach(t => el("line", { x1: x0 + w * t / 720, y1: y0 - 2, x2: x0 + w * t / 720, y2: y0 - 14, class: "req" }, s));
+    text(s, x0 + 4, y0 - 20, T(lang, "requests", "запросы"), "lbl", "start");
+    // instances: 0 → 1 at first request (+cold start), → 3 at the burst, back to 0 after idle
+    const inst = [[0, 0], [120, 0], [122, 1], [200, 1], [200, 0], [300, 0], [302, 1], [306, 2], [310, 3], [400, 3], [400, 0], [600, 0], [602, 1], [680, 1], [680, 0], [720, 0]];
+    const pts = inst.map(([t, n]) => `${x0 + w * t / 720},${y0 - 40 - n * 40}`).join(" ");
+    el("polyline", { points: pts, class: "series ok" }, s);
+    [0, 1, 2, 3].forEach(n => text(s, x0 - 8, y0 - 36 - n * 40, String(n), "tick", "end"));
+    text(s, x0 - 30, y0 - 190, T(lang, "instances", "экземпляры"), "lbl", "start");
+    [122, 302, 602].forEach(t => { el("circle", { cx: x0 + w * t / 720, cy: y0 - 80, r: 5, class: "dot hot" }, s); });
+    text(s, x0 + w * 122 / 720 + 10, y0 - 96, T(lang, "cold start: a new container boots before it answers (0.1–2 s)", "холодный старт: новый контейнер загружается, прежде чем ответить (0,1–2 с)"), "lbl hot", "start");
+    text(s, 480, 270, T(lang, "You pay only while an instance runs. The worker's cache lives in the instance, so it is a bonus, not state the system depends on.", "Платят только пока экземпляр работает. Кэш воркера живёт в экземпляре — это бонус, а не состояние, от которого зависит система."), "note");
+  };
+
+  // =====================================================================
+  // M1. Three pillars of observability
+  // =====================================================================
+  W.pillars = function (m, lang) {
+    const s = fig(m, 960, 230, T(lang, "Logs, metrics, traces", "Логи, метрики, трейсы"));
+    const cols = [
+      [T(lang, "Logs", "Логи"), T(lang, "one line per event", "строка на событие"), T(lang, "what exactly happened", "что именно случилось"), T(lang, "costly to keep, slow to query", "дорого хранить, медленно искать")],
+      [T(lang, "Metrics", "Метрики"), T(lang, "a number per time slot", "число на интервал времени"), T(lang, "how much, how fast, how often", "сколько, как быстро, как часто"), T(lang, "cheap, always on, no detail", "дёшево, всегда, без деталей")],
+      [T(lang, "Traces", "Трейсы"), T(lang, "one request across services", "один запрос через сервисы"), T(lang, "where the time went", "куда ушло время"), T(lang, "needs instrumentation everywhere", "нужна инструментация везде")],
+    ];
+    cols.forEach((c, i) => {
+      const x = 30 + i * 310;
+      box(s, x, 20, 290, 56, c[0], c[1], i === 1 ? TONE.b : TONE.a);
+      text(s, x + 145, 110, c[2], "row-t");
+      text(s, x + 145, 140, c[3], "note");
+    });
+    el("rect", { x: 20, y: 170, width: 920, height: 44, rx: 8, class: "lane" }, s);
+    text(s, 480, 197, T(lang, "This project uses metrics (the subject of this part) and plain logs on stderr for failures.", "В проекте используются метрики (тема этой части) и обычные логи в stderr для ошибок."), "note");
+  };
+
+  // =====================================================================
+  // M2. Pull model timeline
+  // =====================================================================
+  W.pull = function (m, lang) {
+    const s = fig(m, 960, 330, T(lang, "Prometheus pulls, the service only answers", "Prometheus забирает, сервис только отвечает"));
+    box(s, 30, 30, 200, 56, "Prometheus", T(lang, "scrape every 5 s", "сбор каждые 5 с"), TONE.b);
+    box(s, 30, 210, 200, 56, "analysis-worker", "GET /metrics", TONE.c);
+    for (let i = 0; i < 6; i++) {
+      const x = 300 + i * 105;
+      arrow(s, x, 88, x, 206, i === 0 ? "GET /metrics" : "", {});
+      arrow(s, x + 20, 206, x + 20, 90, i === 0 ? T(lang, "text page", "текст") : "", { ok: true });
+      text(s, x + 10, 290, `t = ${i * 5} s`, "tick");
+      el("circle", { cx: x + 60, cy: 150, r: 3, class: "dot" }, s);
+    }
+    el("line", { x1: 290, y1: 150, x2: 920, y2: 150, class: "axis" }, s);
+    const sample = el("foreignObject", { x: 30, y: 300, width: 900, height: 30 }, s);
+    const code = document.createElementNS("http://www.w3.org/1999/xhtml", "div");
+    code.className = "mono small";
+    code.textContent = 'jobs_processed_total{status="processed"} 8.0    job_duration_seconds_bucket{le="60"} 7.0    llm_cache_hits_total{policy="lru"} 9.0';
+    sample.appendChild(code);
+    text(s, 610, 120, T(lang, "each answer is a text page of current values; Prometheus stamps the time and stores it", "каждый ответ — текстовая страница текущих значений; Prometheus ставит время и сохраняет"), "note");
+    text(s, 610, 250, T(lang, "the service does not know where Prometheus is; it just serves a page", "сервис не знает, где Prometheus; он просто отдаёт страницу"), "note");
+  };
+
+  // =====================================================================
+  // M3. Counter + rate() with a restart (interactive)
+  // =====================================================================
+  W.rate = function (m, lang) {
+    const ctrl = div(m, "wctrl");
+    let windowS = 60;
+    const holder = div(m, "");
+    // samples every 5 s for 150 s; counter increments, process restarts at t=85
+    const samples = [];
+    let v = 0;
+    for (let t = 0; t <= 150; t += 5) {
+      if (t === 85) v = 0;
+      v += t < 85 ? (t % 15 === 0 ? 3 : 1) : 2;
+      samples.push([t, v]);
+    }
+    const draw = () => {
+      holder.innerHTML = "";
+      const s = fig(holder, 960, 360, T(lang, "A counter, a restart, and rate()", "Счётчик, рестарт и rate()"));
+      const x0 = 60, w = 860, y0 = 150, h = 110, maxV = 40;
+      el("line", { x1: x0, y1: y0, x2: x0 + w, y2: y0, class: "axis" }, s);
+      samples.forEach(([t, val], i) => {
+        const x = x0 + w * t / 150, y = y0 - h * val / maxV;
+        el("circle", { cx: x, cy: y, r: 3.5, class: "dot" }, s);
+        if (i) { const [pt, pv] = samples[i - 1]; el("line", { x1: x0 + w * pt / 150, y1: y0 - h * pv / maxV, x2: x, y2: y, class: "series thin" }, s); }
+      });
+      text(s, x0 + w * 85 / 150, y0 - h - 10, T(lang, "restart: the counter falls to 0", "рестарт: счётчик падает до 0"), "lbl hot");
+      el("line", { x1: x0 + w * 85 / 150, y1: y0 - h, x2: x0 + w * 85 / 150, y2: y0, class: "req hot" }, s);
+      text(s, 20, y0 - h, "40", "tick", "start"); text(s, 20, y0, "0", "tick", "start");
+      text(s, x0, y0 - h - 10, T(lang, "jobs_processed_total (raw)", "jobs_processed_total (сырое)"), "lbl", "start");
+      // rate over window at each sample
+      const y1 = 320, h1 = 90;
+      el("line", { x1: x0, y1: y1, x2: x0 + w, y2: y1, class: "axis" }, s);
+      const rates = samples.map(([t]) => {
+        const inWin = samples.filter(([u]) => u > t - windowS && u <= t);
+        if (inWin.length < 2) return [t, null];
+        let inc = 0;
+        for (let i = 1; i < inWin.length; i++) { const d = inWin[i][1] - inWin[i - 1][1]; inc += d >= 0 ? d : inWin[i][1]; }
+        return [t, inc / (inWin[inWin.length - 1][0] - inWin[0][0])];
+      }).filter(r => r[1] != null);
+      const maxR = 0.6;
+      const pts = rates.map(([t, r]) => `${x0 + w * t / 150},${y1 - h1 * Math.min(r, maxR) / maxR}`).join(" ");
+      el("polyline", { points: pts, class: "series ok" }, s);
+      text(s, 20, y1 - h1, "0.6/s", "tick", "start"); text(s, 20, y1, "0", "tick", "start");
+      text(s, x0, y1 - h1 - 10, `rate(jobs_processed_total[${windowS}s])`, "lbl ok", "start");
+      for (let t = 0; t <= 150; t += 30) text(s, x0 + w * t / 150, y1 + 18, t + " s", "tick");
+      text(s, 480, 355, T(lang, "rate() = increase inside the window ÷ window length. A drop to zero is read as a restart and the increase before it is kept, not subtracted.", "rate() = прирост внутри окна ÷ длина окна. Падение до нуля читается как рестарт, и прирост до него сохраняется, а не вычитается."), "note");
+    };
+    slider(ctrl, T(lang, "window", "окно"), 15, 120, windowS, 5, v => { windowS = v; draw(); }, v => v + " s");
+    draw();
+  };
+
+  // =====================================================================
+  // M4. Metric types
+  // =====================================================================
+  W.types = function (m, lang) {
+    const s = fig(m, 960, 250, T(lang, "Counter, gauge, histogram", "Counter, gauge, histogram"));
+    const panel = (x, title, sub) => { box(s, x, 20, 290, 40, title, "", TONE.a); text(s, x + 145, 225, sub, "note"); el("line", { x1: x + 20, y1: 190, x2: x + 270, y2: 190, class: "axis" }, s); };
+    panel(30, "counter", T(lang, "only up; look at rate()", "только вверх; смотрите rate()"));
+    panel(340, "gauge", T(lang, "up and down; look at the value", "вверх и вниз; смотрите значение"));
+    panel(650, "histogram", T(lang, "counts per bucket (le=…); quantiles later", "число в корзинах (le=…); квантили потом"));
+    let pts = "", v = 0;
+    for (let i = 0; i <= 12; i++) { v += [1, 0, 2, 1, 3, 0, 1, 2, 1, 0, 2, 1, 1][i]; pts += `${50 + i * 20},${190 - v * 7} `; }
+    el("polyline", { points: pts.trim(), class: "series" }, s);
+    pts = "";
+    for (let i = 0; i <= 12; i++) pts += `${360 + i * 20},${150 + Math.sin(i / 1.5) * 30} `;
+    el("polyline", { points: pts.trim(), class: "series ok" }, s);
+    const buckets = [["5", 1], ["15", 2], ["30", 4], ["60", 6], ["120", 7], ["300", 8], ["600", 8], ["+Inf", 8]];
+    buckets.forEach(([le, c], i) => {
+      const x = 672 + i * 32;
+      el("rect", { x, y: 190 - c * 13, width: 24, height: c * 13, rx: 3, class: "bar tone-c" }, s);
+      text(s, x + 12, 205, le, "tick");
+    });
+    text(s, 795, 80, T(lang, "cumulative: le=60 counts everything ≤ 60 s", "накопительно: le=60 считает всё ≤ 60 с"), "note");
+  };
+
+  // =====================================================================
+  // M5. histogram_quantile (interactive)
+  // =====================================================================
+  W.quantile = function (m, lang) {
+    const ctrl = div(m, "wctrl");
+    let q = 0.95;
+    const holder = div(m, "");
+    const les = [5, 15, 30, 60, 120, 300, 600, Infinity];
+    const counts = [1, 3, 9, 17, 25, 29, 30, 30]; // cumulative
+    const draw = () => {
+      holder.innerHTML = "";
+      const s = fig(holder, 960, 330, "histogram_quantile");
+      const total = counts[counts.length - 1], target = q * total;
+      let bi = counts.findIndex(c => c >= target);
+      const lo = bi === 0 ? 0 : les[bi - 1], hi = les[bi];
+      const cLo = bi === 0 ? 0 : counts[bi - 1], cHi = counts[bi];
+      const est = hi === Infinity ? lo : lo + (hi - lo) * (target - cLo) / (cHi - cLo);
+      les.forEach((le, i) => {
+        const x = 60 + i * 110, hgt = counts[i] * 6;
+        el("rect", { x, y: 230 - hgt, width: 80, height: hgt, rx: 4, class: "bar " + (i === bi ? "tone-hot" : "tone-c") }, s);
+        text(s, x + 40, 250, "le=" + (le === Infinity ? "+Inf" : le), "tick");
+        text(s, x + 40, 222 - hgt, String(counts[i]), "tick");
+      });
+      el("line", { x1: 50, y1: 230 - target * 6, x2: 930, y2: 230 - target * 6, class: "req hot" }, s);
+      text(s, 930, 224 - target * 6, `${q} × ${total} = ${target.toFixed(1)}`, "lbl hot", "end");
+      text(s, 480, 290, T(lang, `The ${target.toFixed(1)}th observation falls in bucket (${lo}, ${hi === Infinity ? "+Inf" : hi}]; assuming values spread evenly inside it: p${Math.round(q * 100)} ≈ ${est.toFixed(0)} s`, `${target.toFixed(1)}-е наблюдение попадает в корзину (${lo}, ${hi === Infinity ? "+Inf" : hi}]; считая значения равномерными внутри: p${Math.round(q * 100)} ≈ ${est.toFixed(0)} с`), "note");
+      text(s, 480, 315, T(lang, "Precision = bucket width. Buckets must be chosen around the values that matter (here: the 600 s deadline).", "Точность = ширина корзины. Корзины выбирают вокруг значений, которые важны (здесь: дедлайн 600 с)."), "note");
+    };
+    slider(ctrl, T(lang, "quantile", "квантиль"), 0.5, 0.99, q, 0.01, v => { q = v; draw(); }, v => v.toFixed(2));
+    draw();
+  };
+
+  // =====================================================================
+  // M6. Vector matching: the sum() bug
+  // =====================================================================
+  W.matching = function (m, lang) {
+    const s = fig(m, 960, 370, T(lang, "Why ratios need sum() on both sides", "Почему долям нужен sum() с обеих сторон"));
+    text(s, 240, 30, T(lang, "as written (wrong)", "как было (неверно)"), "lane-t");
+    text(s, 720, 30, T(lang, "with sum() (right)", "с sum() (верно)"), "lane-t");
+    box(s, 30, 60, 210, 44, "jobs{status=\"failed\"}", "0.02 /s", TONE.c);
+    text(s, 250, 88, "÷", "op");
+    box(s, 270, 60, 210, 44, "jobs{status=\"failed\"}", "0.02 /s", TONE.c);
+    box(s, 270, 120, 210, 44, "jobs{status=\"processed\"}", "0.13 /s", TONE.c);
+    box(s, 270, 180, 210, 44, "jobs{status=\"skipped\"}", "0.01 /s", TONE.c);
+    arrow(s, 240, 82, 268, 82, "", { hot: true });
+    text(s, 255, 245, T(lang, "the operator pairs series with identical labels: failed ÷ failed = 1.0; the other two have no partner and vanish", "оператор сопоставляет ряды с одинаковыми метками: failed ÷ failed = 1.0; у двух других нет пары, и они исчезают"), "note", "middle", 430);
+    box(s, 520, 60, 200, 44, "sum(failed)", "0.02 /s", TONE.b);
+    text(s, 730, 88, "÷", "op");
+    box(s, 740, 60, 200, 44, "sum(all)", "0.16 /s", TONE.b);
+    el("rect", { x: 520, y: 130, width: 420, height: 44, rx: 9, class: "bx tone-hot" }, s);
+    text(s, 730, 158, "= 0.125  →  12.5 % failing", "bx-t");
+    text(s, 730, 245, T(lang, "sum() drops the labels on both sides, so there is exactly one series each and the division is the real ratio", "sum() убирает метки с обеих сторон: по одному ряду с каждой стороны, и деление даёт настоящую долю"), "note", "middle", 420);
+    text(s, 480, 335, T(lang, "Found in this project with a rule unit test: the old alert fired \"more than 20 % failing\" on one failed job in a hundred.", "Найдено в этом проекте юнит-тестом правил: старый алерт срабатывал «более 20 % ошибок» на одну упавшую задачу из ста."), "note");
+  };
+
+  // =====================================================================
+  // M7. Alert states with `for` (interactive)
+  // =====================================================================
+  W.alert = function (m, lang) {
+    const ctrl = div(m, "wctrl");
+    let forMin = 15;
+    const holder = div(m, "");
+    const cond = t => (t >= 10 && t < 18) || (t >= 30 && t < 58); // minutes where expr > threshold
+    const draw = () => {
+      holder.innerHTML = "";
+      const s = fig(holder, 960, 260, T(lang, "inactive → pending → firing", "inactive → pending → firing"));
+      const x0 = 60, w = 860;
+      let since = null;
+      for (let t = 0; t < 70; t++) {
+        const on = cond(t);
+        if (on && since === null) since = t;
+        if (!on) since = null;
+        const state = !on ? "inactive" : t - since >= forMin ? "firing" : "pending";
+        el("rect", { x: x0 + w * t / 70, y: 80, width: w / 70 + 0.5, height: 50, class: "state " + state }, s);
+        el("rect", { x: x0 + w * t / 70, y: 150, width: w / 70 + 0.5, height: 24, class: "state " + (on ? "cond" : "inactive") }, s);
+      }
+      text(s, x0 - 6, 110, T(lang, "alert", "алерт"), "lbl", "end");
+      text(s, x0 - 6, 167, T(lang, "expr > 0.2", "expr > 0.2"), "lbl", "end");
+      for (let t = 0; t <= 70; t += 10) text(s, x0 + w * t / 70, 200, t + " min", "tick");
+      [["inactive", T(lang, "inactive", "inactive")], ["pending", T(lang, "pending: true, but not yet for 'for'", "pending: истинно, но ещё не 'for'")], ["firing", T(lang, "firing → Alertmanager", "firing → Alertmanager")]].forEach(([c, l], i) => {
+        el("rect", { x: 60 + i * 300, y: 225, width: 16, height: 16, class: "state " + c }, s);
+        text(s, 84 + i * 300, 238, l, "lbl", "start");
+      });
+      text(s, 480, 50, T(lang, `The 8-minute spike never fires with for: ${forMin}m; the long one fires after ${forMin} minutes of being true.`, `Всплеск на 8 минут при for: ${forMin}m не срабатывает; долгий срабатывает через ${forMin} минут истинности.`), "note");
+    };
+    slider(ctrl, "for:", 0, 30, forMin, 1, v => { forMin = v; draw(); }, v => v + "m");
+    draw();
+  };
+
+  // =====================================================================
+  // M8. Grafana dashboard anatomy
+  // =====================================================================
+  W.dashboard = function (m, lang) {
+    const s = fig(m, 960, 330, T(lang, "Anatomy of the dashboard", "Анатомия дашборда"));
+    el("rect", { x: 20, y: 20, width: 920, height: 290, rx: 10, class: "lane" }, s);
+    const panel = (x, y, w, h, title, body) => { el("rect", { x, y, width: w, height: h, rx: 6, class: "panel" }, s); text(s, x + 10, y + 18, title, "panel-t", "start"); if (body) body(x, y, w, h); };
+    panel(35, 35, 440, 120, T(lang, "Jobs by outcome (per minute)  ·  time series", "Задачи по исходу (в минуту)  ·  time series"), (x, y, w, h) => {
+      let p = ""; for (let i = 0; i <= 20; i++) p += `${x + 20 + i * 20},${y + 95 - (i > 8 && i < 12 ? 50 : 15 + (i % 3) * 5)} `;
+      el("polyline", { points: p.trim(), class: "series ok" }, s);
+      text(s, x + w - 10, y + h - 8, "rate(jobs_processed_total[5m]) * 60", "mono-lbl", "end");
+    });
+    panel(490, 35, 215, 120, T(lang, "LLM cache hit ratio  ·  stat", "Доля попаданий в кэш  ·  stat"), (x, y) => { text(s, x + 107, y + 85, "85.7 %", "big ok"); });
+    panel(720, 35, 205, 120, T(lang, "Tests passed ratio  ·  stat", "Доля прошедших тестов  ·  stat"), (x, y) => { text(s, x + 102, y + 85, "100 %", "big ok"); });
+    panel(35, 170, 440, 125, T(lang, "Job duration p50 / p95  ·  time series", "Длительность p50 / p95  ·  time series"), (x, y, w, h) => {
+      text(s, x + w - 10, y + h - 8, "histogram_quantile(0.95, rate(job_duration_seconds_bucket[15m]))", "mono-lbl", "end");
+    });
+    panel(490, 170, 435, 125, T(lang, "LLM tokens per minute  ·  time series", "Токены LLM в минуту  ·  time series"), (x, y, w, h) => {
+      text(s, x + 10, y + 50, T(lang, "every panel = one PromQL query + a unit + a legend", "каждая панель = один запрос PromQL + единица + легенда"), "note", "start");
+      text(s, x + 10, y + 75, T(lang, "the whole dashboard is one JSON file in git, loaded at start-up", "весь дашборд — один JSON-файл в git, загружаемый при старте"), "note", "start");
+      text(s, x + 10, y + 100, T(lang, "a data source YAML points Grafana at Prometheus", "YAML источника данных указывает Grafana на Prometheus"), "note", "start");
+    });
+  };
+
+  // =====================================================================
+  // A2. Kahn's algorithm step-through (interactive)
+  // =====================================================================
+  W.kahn = function (m, lang) {
+    const examples = {
+      dag: {
+        nodes: ["models.py", "pricing.py", "checkout.py", "report.py", "cli.py"],
+        pos: [[120, 150], [330, 60], [540, 150], [330, 240], [760, 150]],
+        edges: [[0, 1], [1, 2], [0, 3], [2, 4], [3, 4]],
+      },
+      cycle: {
+        nodes: ["a.py", "b.py", "c.py", "d.py"],
+        pos: [[160, 150], [400, 150], [640, 60], [640, 240]],
+        edges: [[0, 1], [1, 0], [1, 2], [1, 3]],
+      },
+    };
+    const ctrl = div(m, "wctrl");
+    let exName = "dag", st;
+    const holder = div(m, "");
+    const log = div(m, "wlog");
+    const reset = () => {
+      const ex = examples[exName];
+      st = { indeg: ex.nodes.map(() => 0), ready: [], out: [], done: new Set(), used: new Set(), current: null, finished: false };
+      ex.edges.forEach(([a, b]) => st.indeg[b]++);
+      ex.nodes.forEach((n, i) => { if (st.indeg[i] === 0) st.ready.push(i); });
+      log.textContent = T(lang, "In-degrees counted. Ready (in-degree 0): ", "Входящие рёбра посчитаны. Готовы (in-degree 0): ") + st.ready.map(i => ex.nodes[i]).join(", ");
+      draw();
+    };
+    const step = () => {
+      const ex = examples[exName];
+      if (st.finished) return;
+      if (!st.ready.length) {
+        st.finished = true;
+        const left = ex.nodes.map((n, i) => i).filter(i => !st.done.has(i));
+        log.textContent = left.length
+          ? T(lang, `Queue empty but ${left.length} node(s) remain: ${left.map(i => ex.nodes[i]).join(", ")} → they are in or behind a cycle. Reported, kept in original order.`, `Очередь пуста, но осталось ${left.length}: ${left.map(i => ex.nodes[i]).join(", ")} → они в цикле или за ним. В отчёт, исходный порядок.`)
+          : T(lang, "Done. Order: ", "Готово. Порядок: ") + st.out.map(i => ex.nodes[i]).join(" → ");
+        draw();
+        return;
+      }
+      st.ready.sort((a, b) => a - b); // min-heap by original position
+      const n = st.ready.shift();
+      st.current = n; st.done.add(n); st.out.push(n);
+      const freed = [];
+      ex.edges.forEach(([a, b], ei) => { if (a === n) { st.used.add(ei); st.indeg[b]--; if (st.indeg[b] === 0) { st.ready.push(b); freed.push(b); } } });
+      log.textContent = T(lang, `Emit ${ex.nodes[n]} (smallest original position among ready). `, `Выдаём ${ex.nodes[n]} (наименьшая исходная позиция среди готовых). `)
+        + (freed.length ? T(lang, `Its dependents' in-degree drops; now ready: ${freed.map(i => ex.nodes[i]).join(", ")}.`, `У зависимых уменьшается in-degree; теперь готовы: ${freed.map(i => ex.nodes[i]).join(", ")}.`) : T(lang, "No new node became ready.", "Новых готовых вершин нет."));
+      draw();
+    };
+    const draw = () => {
+      const ex = examples[exName];
+      holder.innerHTML = "";
+      const s = fig(holder, 960, 320, T(lang, "Kahn's algorithm", "Алгоритм Кана"));
+      ex.edges.forEach(([a, b], ei) => {
+        const [x1, y1] = ex.pos[a], [x2, y2] = ex.pos[b];
+        const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy), ux = dx / len, uy = dy / len;
+        const bend = (a === 1 && b === 0) ? 1 : 0; // the back edge of the cycle example
+        const path = bend ? `M${x1 - 60 * ux + 0},${y1 + 40} Q${(x1 + x2) / 2},${y1 + 90} ${x2 + 60 * ux},${y2 + 40}` : `M${x1 + 62 * ux},${y1 + 26 * uy} L${x2 - 62 * ux},${y2 - 26 * uy}`;
+        el("path", { d: path, class: "ln " + (st.used.has(ei) ? "faded" : ""), "marker-end": `url(#ah-${s.dataset.uid})` }, s);
+      });
+      ex.nodes.forEach((n, i) => {
+        const [x, y] = ex.pos[i];
+        const tone = st.done.has(i) ? (st.current === i ? TONE.hot : TONE.b) : st.ready.includes(i) ? TONE.c : TONE.a;
+        box(s, x - 60, y - 24, 120, 48, n, "in-degree " + st.indeg[i], tone);
+      });
+      text(s, 20, 300, T(lang, "ready queue: ", "очередь готовых: ") + (st.ready.map(i => ex.nodes[i]).join(", ") || "∅"), "row-t", "start");
+      text(s, 940, 300, T(lang, "output: ", "вывод: ") + (st.out.map(i => ex.nodes[i]).join(" → ") || "∅"), "row-t", "end");
+    };
+    button(ctrl, T(lang, "Step", "Шаг"), step);
+    button(ctrl, T(lang, "Reset", "Сброс"), reset);
+    button(ctrl, T(lang, "Example: project files", "Пример: файлы проекта"), () => { exName = "dag"; reset(); });
+    button(ctrl, T(lang, "Example: with a cycle", "Пример: с циклом"), () => { exName = "cycle"; reset(); });
+    reset();
+  };
+
+  // =====================================================================
+  // A3. LRU cache internals (interactive)
+  // =====================================================================
+  function makeLru(cap) {
+    const nodes = new Map();
+    const head = { key: "HEAD" }, tail = { key: "TAIL" };
+    head.next = tail; tail.prev = head;
+    const unlink = n => { n.prev.next = n.next; n.next.prev = n.prev; };
+    const linkFront = n => { n.prev = head; n.next = head.next; head.next.prev = n; head.next = n; };
+    return {
+      cap, hits: 0, misses: 0, evicted: null,
+      get(k) { const n = nodes.get(k); this.evicted = null; if (!n) { this.misses++; return null; } this.hits++; unlink(n); linkFront(n); return n.key; },
+      put(k) { this.evicted = null; let n = nodes.get(k); if (n) { unlink(n); linkFront(n); return; } if (nodes.size >= cap) { const lru = tail.prev; unlink(lru); nodes.delete(lru.key); this.evicted = lru.key; } n = { key: k }; nodes.set(k, n); linkFront(n); },
+      order() { const o = []; for (let n = head.next; n !== tail; n = n.next) o.push(n.key); return o; },
+      keys() { return [...nodes.keys()]; },
+    };
+  }
+  W.lru = function (m, lang) {
+    const ctrl = div(m, "wctrl");
+    let cache = makeLru(3), last = "";
+    const holder = div(m, "");
+    const log = div(m, "wlog");
+    const draw = () => {
+      holder.innerHTML = "";
+      const s = fig(holder, 960, 300, "LRU");
+      text(s, 20, 36, T(lang, "hash map: key → node", "хеш-таблица: ключ → узел"), "row-t", "start");
+      const keys = cache.keys();
+      ["A", "B", "C", "D", "E"].forEach((k, i) => {
+        const has = keys.includes(k);
+        el("rect", { x: 20 + i * 70, y: 50, width: 60, height: 40, rx: 6, class: "bx " + (has ? "tone-c" : "tone-d") }, s);
+        text(s, 50 + i * 70, 75, has ? k + " → •" : k + " → ∅", "bx-s");
+      });
+      text(s, 20, 140, T(lang, "doubly linked list: most recent on the left", "двусвязный список: самое свежее слева"), "row-t", "start");
+      const order = cache.order();
+      const items = ["HEAD", ...order, "TAIL"];
+      items.forEach((k, i) => {
+        const x = 20 + i * 150;
+        const sentinel = k === "HEAD" || k === "TAIL";
+        box(s, x, 160, 120, 50, k, sentinel ? T(lang, "sentinel", "страж") : k === last ? T(lang, "just used", "только что") : "", sentinel ? TONE.d : k === last ? TONE.hot : TONE.b, sentinel);
+        if (i < items.length - 1) { arrow(s, x + 120, 178, x + 150, 178, "", {}); arrow(s, x + 150, 195, x + 120, 195, "", {}); }
+      });
+      if (order.length) text(s, 20 + (items.length - 2) * 150 + 60, 235, T(lang, "← evicted next", "← вытеснится следующим"), "lbl hot");
+      text(s, 480, 280, T(lang, `capacity ${cache.cap} · hits ${cache.hits} · misses ${cache.misses}`, `ёмкость ${cache.cap} · попаданий ${cache.hits} · промахов ${cache.misses}`) + (cache.evicted ? T(lang, ` · evicted ${cache.evicted}`, ` · вытеснен ${cache.evicted}`) : ""), "note");
+    };
+    const act = (op, k) => {
+      const before = cache.keys().includes(k);
+      if (op === "get") { const r = cache.get(k); log.textContent = r ? T(lang, `get(${k}): hit. Unlink the node and re-link it after HEAD: two pointer swaps, no scanning.`, `get(${k}): попадание. Отвязать узел и привязать после HEAD: две перестановки указателей, без сканирования.`) : T(lang, `get(${k}): miss. The map has no node for ${k}.`, `get(${k}): промах. В таблице нет узла для ${k}.`); }
+      else { cache.put(k); log.textContent = before ? T(lang, `put(${k}): already cached; moved to the front.`, `put(${k}): уже в кэше; перенесён вперёд.`) : cache.evicted ? T(lang, `put(${k}): full, so TAIL.prev (${cache.evicted}) is unlinked and dropped from the map, then ${k} goes to the front.`, `put(${k}): полно, поэтому TAIL.prev (${cache.evicted}) отвязывается и удаляется из таблицы, затем ${k} встаёт вперёд.`) : T(lang, `put(${k}): new node after HEAD, map entry added.`, `put(${k}): новый узел после HEAD, запись в таблице добавлена.`); }
+      last = k; draw();
+    };
+    ["A", "B", "C", "D", "E"].forEach(k => button(ctrl, "get " + k, () => act("get", k)));
+    ["A", "B", "C", "D", "E"].forEach(k => button(ctrl, "put " + k, () => act("put", k)));
+    button(ctrl, T(lang, "Reset", "Сброс"), () => { cache = makeLru(3); last = ""; log.textContent = ""; draw(); });
+    draw();
+  };
+
+  // =====================================================================
+  // A4. LFU cache internals (interactive)
+  // =====================================================================
+  function makeLfu(cap) {
+    const values = new Map(), freq = new Map(), buckets = new Map();
+    let minF = 0;
+    const bump = k => {
+      const f = freq.get(k); buckets.get(f).delete(k);
+      if (!buckets.get(f).size) { buckets.delete(f); if (minF === f) minF = f + 1; }
+      freq.set(k, f + 1); if (!buckets.has(f + 1)) buckets.set(f + 1, new Set()); buckets.get(f + 1).add(k);
+    };
+    return {
+      cap, hits: 0, misses: 0, evicted: null,
+      get(k) { this.evicted = null; if (!values.has(k)) { this.misses++; return null; } this.hits++; bump(k); return k; },
+      put(k) { this.evicted = null; if (values.has(k)) { bump(k); return; } if (values.size >= cap) { const b = buckets.get(minF); const victim = b.values().next().value; b.delete(victim); if (!b.size) buckets.delete(minF); values.delete(victim); freq.delete(victim); this.evicted = victim; } values.set(k, true); freq.set(k, 1); if (!buckets.has(1)) buckets.set(1, new Set()); buckets.get(1).add(k); minF = 1; },
+      state() { return { buckets: [...buckets.entries()].sort((a, b) => a[0] - b[0]).map(([f, s]) => [f, [...s]]), minF, keys: [...values.keys()] }; },
+    };
+  }
+  W.lfu = function (m, lang) {
+    const ctrl = div(m, "wctrl");
+    let cache = makeLfu(3), last = "";
+    const holder = div(m, "");
+    const log = div(m, "wlog");
+    const draw = () => {
+      holder.innerHTML = "";
+      const s = fig(holder, 960, 300, "LFU");
+      const st = cache.state();
+      text(s, 20, 36, T(lang, "buckets: use count → keys in insertion order (oldest first)", "корзины: число обращений → ключи в порядке добавления (старые первыми)"), "row-t", "start");
+      const fs = [1, 2, 3, 4, 5];
+      fs.forEach((f, i) => {
+        const x = 20 + i * 185;
+        const isMin = f === st.minF && st.keys.length;
+        el("rect", { x, y: 55, width: 170, height: 150, rx: 9, class: "bx " + (isMin ? "tone-hot" : "tone-d"), "stroke-dasharray": isMin ? "" : "6 5" }, s);
+        text(s, x + 85, 80, T(lang, `used ${f}×`, `${f}× обращений`), "bx-t");
+        const entry = st.buckets.find(b => b[0] === f);
+        (entry ? entry[1] : []).forEach((k, j) => { el("rect", { x: x + 15 + j * 50, y: 100, width: 42, height: 36, rx: 6, class: "bx " + (k === last ? "tone-hot" : "tone-b") }, s); text(s, x + 36 + j * 50, 124, k, "bx-t"); });
+        if (isMin) text(s, x + 85, 190, T(lang, "min pointer: evict from here", "min-указатель: вытеснять отсюда"), "lbl hot");
+      });
+      text(s, 480, 240, T(lang, "a use moves the key one bucket to the right; eviction pops the oldest key of the min bucket", "обращение переносит ключ на корзину вправо; вытеснение забирает самый старый ключ из min-корзины"), "note");
+      text(s, 480, 280, T(lang, `capacity ${cache.cap} · hits ${cache.hits} · misses ${cache.misses}`, `ёмкость ${cache.cap} · попаданий ${cache.hits} · промахов ${cache.misses}`) + (cache.evicted ? T(lang, ` · evicted ${cache.evicted}`, ` · вытеснен ${cache.evicted}`) : ""), "note");
+    };
+    const act = (op, k) => {
+      if (op === "get") { const r = cache.get(k); log.textContent = r ? T(lang, `get(${k}): hit, count +1 → moved one bucket right.`, `get(${k}): попадание, счётчик +1 → на корзину правее.`) : T(lang, `get(${k}): miss.`, `get(${k}): промах.`); }
+      else { cache.put(k); log.textContent = cache.evicted ? T(lang, `put(${k}): full → the oldest key of the min bucket (${cache.evicted}) is evicted; ${k} enters bucket 1 and min = 1.`, `put(${k}): полно → самый старый ключ min-корзины (${cache.evicted}) вытеснен; ${k} входит в корзину 1, min = 1.`) : T(lang, `put(${k}): enters bucket 1 (or count +1 if present).`, `put(${k}): в корзину 1 (или счётчик +1, если уже есть).`); }
+      last = k; draw();
+    };
+    ["A", "B", "C", "D", "E"].forEach(k => button(ctrl, "get " + k, () => act("get", k)));
+    ["A", "B", "C", "D", "E"].forEach(k => button(ctrl, "put " + k, () => act("put", k)));
+    button(ctrl, T(lang, "Reset", "Сброс"), () => { cache = makeLfu(3); last = ""; log.textContent = ""; draw(); });
+    draw();
+  };
+
+  // =====================================================================
+  // A5. LRU vs LFU on two workloads (interactive)
+  // =====================================================================
+  W.race = function (m, lang) {
+    const ctrl = div(m, "wctrl");
+    let cap = 3;
+    const holder = div(m, "");
+    const patterns = {
+      bursty: { name: T(lang, "bursty re-runs: three files pushed twice, then three others twice, then three more", "всплески: три файла дважды, затем три других дважды, затем ещё три"), seq: "ABCABCDEFDEFGHIGHI".split("") },
+      hot: { name: T(lang, "hot key: A used twice at the start, then every fourth access; the others pass through once", "горячий ключ: A дважды в начале, затем каждое четвёртое обращение; остальные по разу"), seq: "AABCDAEFGAHIJAKLMA".split("") },
+    };
+    const simulate = (seq, mk) => { const c = mk(cap); seq.forEach(k => { if (c.get(k) === null) c.put(k); }); return c; };
+    const draw = () => {
+      holder.innerHTML = "";
+      const s = fig(holder, 960, 300, T(lang, "LRU vs LFU", "LRU и LFU"));
+      Object.entries(patterns).forEach(([id, p], row) => {
+        const y = 40 + row * 130;
+        text(s, 20, y, p.name, "row-t", "start");
+        [["LRU", makeLru], ["LFU", makeLfu]].forEach(([nm, mk], i) => {
+          const c = simulate(p.seq, mk);
+          const ratio = c.hits / (c.hits + c.misses);
+          const x = 40 + i * 470;
+          text(s, x, y + 36, nm, "bx-t", "start");
+          el("rect", { x: x + 50, y: y + 20, width: 240, height: 24, rx: 5, class: "bar tone-d" }, s);
+          el("rect", { x: x + 50, y: y + 20, width: 240 * ratio, height: 24, rx: 5, class: "bar " + (ratio >= 0.4 ? "tone-b" : "tone-c") }, s);
+          text(s, x + 300, y + 37, `${c.hits} / ${c.hits + c.misses}  (${Math.round(ratio * 100)} %)`, "lbl", "start");
+        });
+        text(s, 20, y + 75, T(lang, "sequence: ", "последовательность: ") + p.seq.join(" "), "mono-lbl", "start");
+      });
+      text(s, 480, 290, T(lang, `capacity ${cap}. LRU keeps what was used recently; LFU keeps what was used often. The workload decides which wins.`, `ёмкость ${cap}. LRU хранит недавнее; LFU — частое. Какая выиграет, решает нагрузка.`), "note");
+    };
+    slider(ctrl, T(lang, "capacity", "ёмкость"), 2, 5, cap, 1, v => { cap = v; draw(); });
+    draw();
+  };
+
+  // ---------- mount everything ----------
+  document.querySelectorAll("[data-widget]").forEach(node => {
+    const name = node.dataset.widget;
+    const lang = node.closest("[lang]").getAttribute("lang");
+    if (W[name]) { try { W[name](node, lang); } catch (e) { node.textContent = "widget error: " + e.message; } }
+  });
+})();
+</script>
+<script>
+(function () {
+  var buttons = Array.prototype.slice.call(document.querySelectorAll('[data-lang]'));
+  function show(lang) {
+    ['en', 'ru'].forEach(function (l) { document.getElementById('lang-' + l).hidden = l !== lang; });
+    buttons.forEach(function (b) { b.setAttribute('aria-selected', String(b.getAttribute('data-lang') === lang)); });
+    document.documentElement.lang = lang;
+    try { localStorage.setItem('pdp-guide-lang', lang); } catch (e) {}
+  }
+  buttons.forEach(function (b) { b.addEventListener('click', function () { show(b.getAttribute('data-lang')); window.scrollTo(0, 0); }); });
+  var initial = 'en';
+  if (location.hash.indexOf('#ru') === 0) { initial = 'ru'; }
+  else if (location.hash.indexOf('#en') !== 0) { try { initial = localStorage.getItem('pdp-guide-lang') || 'en'; } catch (e) {} }
+  show(initial === 'ru' ? 'ru' : 'en');
+})();
+</script>

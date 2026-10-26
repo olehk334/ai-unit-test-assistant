@@ -15,7 +15,7 @@ RUN pip install --no-cache-dir .
 COPY services/analysis_worker/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY services/analysis_worker/worker_app.py .
+COPY services/analysis_worker/*.py ./
 
 ENV PORT=8080
 CMD ["sh", "-c", "uvicorn worker_app:app --host 0.0.0.0 --port ${PORT}"]

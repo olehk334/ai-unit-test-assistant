@@ -20,9 +20,6 @@ Copy the sample config file to the root of the target repo and edit the values
 to match your layout:
 
 ```yaml
-source_roots:
-  - src
-  - app
 test_roots:
   - tests
 exclude_paths:

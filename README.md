@@ -120,8 +120,10 @@ The PR workflow needs three secrets / variables to talk to Vertex AI:
 
 1. For every changed source file the assistant searches for related existing
    test files (direct name match, mirrored layout, or import / target-name
-   references).
+   references). Tests it generated itself (`*_generated.py`) never count.
 2. It asks Gemini for the full updated test file based on the new source code.
+   When several changed files relate to the same test file, each update starts
+   from the previous suggestion, so the final one carries all of them.
 3. The result is written to `reports/suggested-tests/<original-test-path>`
    with a header asking the human reviewer to compare before replacing the
    original. The original test files are never overwritten automatically.
@@ -133,7 +135,7 @@ GitHub webhook → Cloud Run receiver → Pub/Sub → Cloud Run worker → GCS
 artifacts + commit status. See:
 
 - [docs/architecture.md](docs/architecture.md) — services, message contract,
-  failure modes, local run instructions
+  code map (which file does what), failure modes, local run instructions
 - [docs/cloud_equivalence.md](docs/cloud_equivalence.md) — GCP/AWS/Azure
   mapping and the theory behind the design
 - [docs/monitoring.md](docs/monitoring.md) — Prometheus metrics and the local

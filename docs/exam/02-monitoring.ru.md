@@ -210,8 +210,8 @@ head сбрасывается в постоянный блок (чанки + и�
 
 ```yaml
 - alert: HighJobFailureRate
-  expr: rate(jobs_processed_total{status="failed"}[15m])
-        / clamp_min(rate(jobs_processed_total[15m]), 1e-9) > 0.2
+  expr: sum(rate(jobs_processed_total{status="failed"}[15m]))
+        / clamp_min(sum(rate(jobs_processed_total[15m])), 1e-9) > 0.2
   for: 15m
   labels:   { severity: warning }
   annotations:
@@ -220,6 +220,12 @@ head сбрасывается в постоянный блок (чанки + и�
 
 Состояния правила: **inactive → pending** (условие истинно, выжидаем `for`) →
 **firing**. Именно `for` подавляет «дребезг» (flapping).
+
+**Зачем `sum()` с обеих сторон.** Бинарный оператор сопоставляет ряды с
+одинаковым набором меток. Без `sum()` ряд `status="failed"` делится только на
+ряд `status="failed"`: при любой ошибке отношение равно 1.0, и порог 20% ни
+на что не влияет. В этом проекте была ровно такая ошибка; теперь её ловит
+юнит-тест правил (`promtool test rules`, см. `monitoring/alerts_test.yml`).
 
 **Возможности Alertmanager:** *группировка* (одно уведомление на 50 связанных
 алертов; управляется `group_by`, `group_wait`, `group_interval`,
@@ -434,8 +440,8 @@ sum by (status) (rate(jobs_processed_total[5m])) * 60
 rate(jobs_processed_total[5m]) * 60
 
 # Доля ошибок, с защитой от деления на ноль
-rate(jobs_processed_total{status="failed"}[15m])
-  / clamp_min(rate(jobs_processed_total[15m]), 1e-9)
+sum(rate(jobs_processed_total{status="failed"}[15m]))
+  / clamp_min(sum(rate(jobs_processed_total[15m])), 1e-9)
 
 # p95 задержки по всем экземплярам (возможно только с гистограммами)
 histogram_quantile(0.95, sum by (le) (rate(job_duration_seconds_bucket[15m])))
@@ -620,7 +626,7 @@ pytest, заглушённый LLM), Prometheus, опрашивающий его
 | `job_duration_seconds` | histogram | p95 относительно дедлайна подтверждения в 600 с |
 | `llm_calls_total`, `llm_seconds_total` | counter | Как часто и как долго ждём модель |
 | `llm_prompt_tokens_total`, `llm_response_tokens_total` | counter | Стоимость в минуту |
-| `llm_cache_hits_total` / `_misses_total` | counter | Окупается ли LRU-кэш? |
+| `llm_cache_hits_total{policy}` / `_misses_total{policy}` | counter | Окупается ли кэш ответов при каждой политике вытеснения (`lru` / `lfu`)? |
 | `generated_test_files_total{result}` | counter | KPI качества: проходят ли сгенерированные тесты? |
 
 **Измеренный результат, который стоит цитировать.** На локальный стенд были
@@ -629,8 +635,8 @@ pytest, заглушённый LLM), Prometheus, опрашивающий его
 ```
 jobs_processed_total{status="processed"}  4
 llm_calls_total                           3
-llm_cache_hits_total                      9
-llm_cache_misses_total                    3
+llm_cache_hits_total{policy="lru"}        9
+llm_cache_misses_total{policy="lru"}      3
 generated_test_files_total{result="passed"} 8
 ```
 

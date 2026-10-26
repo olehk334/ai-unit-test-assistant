@@ -12,8 +12,12 @@ cloud dependencies.
 | `job_duration_seconds` | histogram | Durations need percentiles, not averages — a histogram's buckets let PromQL compute p50/p95 across restarts. |
 | `llm_calls_total`, `llm_seconds_total` | counter | Cumulative LLM work; the ratio gives mean call latency. |
 | `llm_prompt_tokens_total`, `llm_response_tokens_total` | counter | Tokens are the direct cost driver; `rate()` = spend per minute. |
-| `llm_cache_hits_total`, `llm_cache_misses_total` | counter | Hit ratio proves the Phase 4 cache pays for itself. |
+| `llm_cache_hits_total{policy}`, `llm_cache_misses_total{policy}` | counter | Hit ratio proves the response cache pays for itself; the label (`lru` / `lfu`) tells the eviction policies apart. |
 | `generated_test_files_total{result}` | counter | Headline quality KPI: how often generated tests pass. |
+
+Every known label value (job status, test result, cache policy) is exported
+at 0 from startup: `rate()` cannot see the first increment of a series that
+did not exist before it.
 
 Counter vs gauge rule of thumb used here: everything above only ever grows,
 so counters + `rate()` are correct. Gauges (current value, may go down)
@@ -48,6 +52,10 @@ The worker runs in dry-run mode: real clone, real pipeline, real pytest —
 stubbed LLM. Repeat runs of the same job demonstrate the cache: the hit
 ratio panel climbs while token rates stay flat.
 
+To try the LFU policy, set `LLM_CACHE_POLICY: "lfu"` in
+`docker-compose.yml`, run `docker compose up --build` again and send the same
+jobs; the hit-ratio panel then reports under the `lfu` label.
+
 ## Useful PromQL
 
 ```promql
@@ -57,7 +65,7 @@ rate(jobs_processed_total[5m]) * 60
 # p95 job duration
 histogram_quantile(0.95, rate(job_duration_seconds_bucket[15m]))
 
-# Cache hit ratio (all-time)
+# Cache hit ratio (all-time, one series per policy)
 llm_cache_hits_total / clamp_min(llm_cache_hits_total + llm_cache_misses_total, 1)
 
 # Mean LLM call latency
@@ -75,6 +83,15 @@ out of scope):
 - **SlowAnalysisJobs** — p95 duration above 5 min for 10 min. Matters
   because the Pub/Sub ack deadline is 600 s: beyond it, redeliveries cause
   duplicate work.
+
+The failure-rate alert and the dashboard's pass-ratio panel use `sum()` on
+both sides of the division: dividing labelled series directly pairs only equal
+label sets. The rules have unit tests in `monitoring/alerts_test.yml`; from the
+repository root:
+
+```bash
+docker run --rm -v "$PWD/monitoring:/work" -w /work --entrypoint promtool prom/prometheus:v2.53.0 test rules alerts_test.yml
+```
 
 ## Cloud path
 

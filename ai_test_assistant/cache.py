@@ -8,9 +8,10 @@ metrics library.
 the assistant on an unchanged file (e.g. after a rebase) returns the cached
 response instead of paying for another Gemini call.
 
-``LFUCache`` is provided as the alternative eviction policy: it wins when a
-few keys are reused far more often than the rest (hot shared modules), while
-LRU wins for bursty re-runs of recent work. See docs/algorithms.md.
+``LFUCache`` is the alternative eviction policy (the worker switches with
+LLM_CACHE_POLICY=lfu): it wins when a few keys are reused far more often than
+the rest (hot shared modules), while LRU wins for bursty re-runs of recent
+work. See docs/algorithms.md.
 """
 
 from __future__ import annotations
@@ -36,6 +37,8 @@ class LRUCache:
     ``_tail``). ``get`` and ``put`` are O(1): the dict finds the node, the
     linked list re-orders or evicts it without scanning.
     """
+
+    policy = "lru"
 
     def __init__(self, capacity: int):
         if capacity < 1:
@@ -101,6 +104,8 @@ class LFUCache:
     ``_min_frequency`` always points at the lowest non-empty bucket, so
     eviction pops the oldest key of that bucket in O(1).
     """
+
+    policy = "lfu"
 
     def __init__(self, capacity: int):
         if capacity < 1:

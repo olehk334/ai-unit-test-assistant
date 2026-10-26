@@ -478,9 +478,10 @@ a single mutex (simple, contended); **lock striping** (shard the cache by
 `hash(key) % N`, each shard with its own lock — near-linear scaling);
 lock-free designs; or Caffeine's approach of buffering access events in ring
 buffers and replaying them asynchronously, so readers never block. In this
-project the worker runs with **concurrency = 1**, so a lock would be pure
-overhead — but the limitation is documented rather than ignored, which is the
-correct engineering posture.
+project jobs never overlap — Cloud Run gives each worker instance one request
+at a time (**concurrency = 1**) and the worker holds a lock around each job —
+so a lock inside the cache would be pure overhead. The limitation is
+documented rather than ignored, which is the correct engineering posture.
 
 ## B6. LFU implemented and dissected
 
@@ -610,9 +611,16 @@ defensible rather than academic.
 ### Topological sort — `ai_test_assistant/import_graph.py`
 
 **Problem.** A pull request changes both `models.py` and `service.py`, and
-`service` imports `models`. Processing them in arbitrary order means the
-analyser may generate tests for `service` against a stale understanding of
-its dependency, and the output order is non-deterministic between runs.
+`service` imports `models`. The assistant processes changed files one at a
+time, so it needs an order that is reproducible and means something. The
+report should list `models` before the code that uses it. And `models` should
+be processed before tests exist for `service`: generated tests land under
+`tests/generated/`, which the related-test search reads, so processing
+`service` first could feed its fresh tests into the prompt for `models`.
+
+What the order does **not** do: change what a prompt sees of the source code.
+Every file is read from the PR head either way, so "it avoids testing against
+a stale dependency" would be a wrong answer.
 
 **Solution.** Build an import graph **over the changed files only** (external
 and unchanged modules are irrelevant to ordering), then run Kahn's algorithm:
@@ -632,7 +640,11 @@ Design decisions worth quoting in an exam:
   importing module's package, and the `from package import module` form which
   must create an edge to `package.module`, not merely to `package`. (That
   last case was a real bug found in review and fixed with a regression test.)
-- **Ties break by original file order**, so the pipeline is reproducible.
+- **Ties break by original file order**, so the pipeline is reproducible:
+  the ready files sit in a min-heap keyed by original position (the min-heap
+  variant from B2), `O((V + E) log V)`. The first version re-sorted the whole
+  ready list on every step, which is `O(V² log V)`; harmless at PR size, but
+  the documented complexity was wrong until the heap replaced it.
 - **Cycles degrade gracefully**: the affected files keep their original order
   and are listed in the JSON and Markdown reports as
   `import_cycle_files`. A cycle in the analysed repository is a code smell in
@@ -664,9 +676,10 @@ def _cache_key(self, system_instruction: str, prompt: str) -> str:
 - **Hashing, not raw prompts, as keys** keeps memory bounded and lookups
   cheap.
 - **The cache is injected, not built in.** The CLI passes none (a single run
-  rarely repeats a prompt); the long-running worker owns one
-  `LRUCache(capacity=256)` for the whole process, so it spans jobs — which is
-  what makes "push the branch again, pay nothing" work.
+  rarely repeats a prompt); the long-running worker owns one 256-entry cache
+  for the whole process (`LRUCache` by default, `LFUCache` with
+  `LLM_CACHE_POLICY=lfu`), so it spans jobs — which is what makes "push the
+  branch again, pay nothing" work.
 - **Correctness precondition:** caching is only sound because
   `temperature = 0`. At non-zero temperature you would be replacing a
   distribution of answers with one sample. Naming this precondition is the
@@ -685,20 +698,20 @@ results.**
 **Measured effect** (four identical jobs against the local monitoring stack):
 job 1 produced 3 misses and 3 real model calls; jobs 2–4 produced 9 hits and
 **zero** additional calls. Exported as `llm_cache_hits_total` and
-`llm_cache_misses_total` and displayed next to the token-rate panel in
-Grafana — the optimisation is measured, not assumed.
+`llm_cache_misses_total` (labelled with the policy) and displayed next to the
+token-rate panel in Grafana — the optimisation is measured, not assumed.
 
-### LFU — implemented, tested, deliberately not wired
+### LFU — the switchable alternative
 
-`LFUCache` is fully implemented with `O(1)` operations and unit tests, but is
-not used by the pipeline. The justification is a design principle rather than
-laziness: **LRU matches the actual access pattern** (bursty re-runs of the
-same branch — temporal locality), while LFU would win only in a different
-deployment, one worker serving many repositories where a few shared modules
-appear in most pull requests. Wiring in a policy that cannot win on the
-current workload would be a speculative abstraction. Being able to say
-*"implemented, benchmarked in theory, not deployed, and here is the workload
-that would justify it"* is a stronger answer than deploying both.
+`LFUCache` is fully implemented with `O(1)` operations and unit tests, and
+the worker runs with it when `LLM_CACHE_POLICY=lfu` is set; an unknown value
+stops the worker at startup with a clear error. **LRU stays the default
+because it matches the actual access pattern** (bursty re-runs of the same
+branch — temporal locality). LFU would win in a different deployment: one
+worker serving many repositories, where a few shared modules appear in most
+pull requests. Because the cache counters carry a `policy` label, the same
+jobs can be run under each policy and compared on the hit-ratio panel, so
+the choice between them is measured rather than argued.
 
 ## B10. Study plan and sources
 

@@ -202,8 +202,8 @@ how often.
 
 ```yaml
 - alert: HighJobFailureRate
-  expr: rate(jobs_processed_total{status="failed"}[15m])
-        / clamp_min(rate(jobs_processed_total[15m]), 1e-9) > 0.2
+  expr: sum(rate(jobs_processed_total{status="failed"}[15m]))
+        / clamp_min(sum(rate(jobs_processed_total[15m])), 1e-9) > 0.2
   for: 15m
   labels:   { severity: warning }
   annotations:
@@ -212,6 +212,12 @@ how often.
 
 Rule states: **inactive → pending** (condition true, waiting out `for`) →
 **firing**. The `for` clause is what suppresses flapping.
+
+**Why `sum()` on both sides.** A binary operator pairs series with identical
+label sets. Without the sums, the `status="failed"` series is divided only by
+the `status="failed"` series: the ratio is 1.0 on any failure and the 20%
+threshold never matters. This project shipped that mistake; a rule unit test
+(`promtool test rules`, see `monitoring/alerts_test.yml`) now catches it.
 
 **Alertmanager features:** *grouping* (one notification for 50 related
 alerts, controlled by `group_by`, `group_wait`, `group_interval`,
@@ -419,8 +425,8 @@ per-second rate per series (handling resets); sum those rates grouped by
 rate(jobs_processed_total[5m]) * 60
 
 # Error ratio, guarded against divide-by-zero
-rate(jobs_processed_total{status="failed"}[15m])
-  / clamp_min(rate(jobs_processed_total[15m]), 1e-9)
+sum(rate(jobs_processed_total{status="failed"}[15m]))
+  / clamp_min(sum(rate(jobs_processed_total[15m])), 1e-9)
 
 # p95 latency across all instances (only possible with histograms)
 histogram_quantile(0.95, sum by (le) (rate(job_duration_seconds_bucket[15m])))
@@ -601,7 +607,7 @@ account and no credentials.
 | `job_duration_seconds` | histogram | p95 vs the 600 s ack deadline |
 | `llm_calls_total`, `llm_seconds_total` | counter | How often and how long we wait on the model |
 | `llm_prompt_tokens_total`, `llm_response_tokens_total` | counter | Cost per minute |
-| `llm_cache_hits_total` / `_misses_total` | counter | Does the LRU cache actually pay off? |
+| `llm_cache_hits_total{policy}` / `_misses_total{policy}` | counter | Does the response cache pay off, per eviction policy (`lru` / `lfu`)? |
 | `generated_test_files_total{result}` | counter | Quality KPI: do generated tests pass? |
 
 **A measured result worth quoting.** Four identical jobs were sent to the
@@ -610,8 +616,8 @@ local stack. The counters afterwards:
 ```
 jobs_processed_total{status="processed"}  4
 llm_calls_total                           3
-llm_cache_hits_total                      9
-llm_cache_misses_total                    3
+llm_cache_hits_total{policy="lru"}        9
+llm_cache_misses_total{policy="lru"}      3
 generated_test_files_total{result="passed"} 8
 ```
 

@@ -1,0 +1,39 @@
+# Unit tests for alerts.yml. From the repository root:
+#   docker run --rm -v "$PWD/monitoring:/work" -w /work --entrypoint promtool \
+#     prom/prometheus:v2.53.0 test rules alerts_test.yml
+rule_files:
+  - alerts.yml
+
+evaluation_interval: 1m
+
+tests:
+  - name: 10% of jobs failing stays below the 20% threshold
+    interval: 1m
+    input_series:
+      - series: 'jobs_processed_total{job="analysis-worker", instance="worker:8080", status="processed"}'
+        values: '0+9x40'
+      - series: 'jobs_processed_total{job="analysis-worker", instance="worker:8080", status="failed"}'
+        values: '0+1x40'
+    alert_rule_test:
+      - eval_time: 35m
+        alertname: HighJobFailureRate
+        exp_alerts: []
+
+  - name: 50% of jobs failing fires once it has lasted 15 minutes
+    interval: 1m
+    input_series:
+      - series: 'jobs_processed_total{job="analysis-worker", instance="worker:8080", status="processed"}'
+        values: '0+5x40'
+      - series: 'jobs_processed_total{job="analysis-worker", instance="worker:8080", status="failed"}'
+        values: '0+5x40'
+    alert_rule_test:
+      - eval_time: 35m
+        alertname: HighJobFailureRate
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+            exp_annotations:
+              summary: "More than 20% of analysis jobs are failing"
+              description: >
+                Check the worker logs and the dead-letter topic; a Gemini outage
+                or a bad deploy are the usual causes.

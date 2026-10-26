@@ -6,15 +6,14 @@ import json
 from pathlib import Path
 
 from .models import FileResult, PipelineResult
+from .repo_paths import relative_to_repo
 
 
 def _relative_or_str(path: Path | None, root: Path) -> str:
     if path is None:
         return ""
-    try:
-        return path.resolve().relative_to(root.resolve()).as_posix()
-    except ValueError:
-        return path.as_posix()
+    rel = relative_to_repo(path, root)
+    return rel.as_posix() if rel is not None else path.as_posix()
 
 
 def _summarize(result: PipelineResult) -> dict[str, int]:

@@ -7,16 +7,13 @@ Priority (highest first):
 from __future__ import annotations
 
 import os
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 import yaml
-
-try:  # Optional .env autoloading.
-    from dotenv import load_dotenv as _load_dotenv
-except ImportError:  # pragma: no cover - dotenv is an installed dep, but keep it optional.
-    _load_dotenv = None  # type: ignore[assignment]
+from dotenv import load_dotenv
 
 
 DEFAULT_CONFIG_FILENAME = "ai-test-assistant.yml"
@@ -31,7 +28,6 @@ class AppConfig:
     suggestions_dir: Path = Path("reports/suggested-tests")
     report_path: Path = Path("reports/ai-test-report.md")
 
-    source_roots: list[str] = field(default_factory=lambda: ["src", "app", "examples"])
     test_roots: list[str] = field(default_factory=lambda: ["tests"])
     exclude_paths: list[str] = field(
         default_factory=lambda: [
@@ -97,10 +93,9 @@ def load_config(
     cfg = AppConfig(repo_root=root)
 
     # Autoload .env if present so users can keep settings in a local file.
-    if _load_dotenv is not None:
-        dotenv_path = root / DEFAULT_DOTENV_FILENAME
-        if dotenv_path.exists():
-            _load_dotenv(dotenv_path, override=False)
+    dotenv_path = root / DEFAULT_DOTENV_FILENAME
+    if dotenv_path.exists():
+        load_dotenv(dotenv_path, override=False)
 
     resolved_config_path = config_path or (root / DEFAULT_CONFIG_FILENAME)
     file_data = _load_yaml(resolved_config_path)
@@ -126,61 +121,51 @@ def _ensure_path(value: Path | str, root: Path) -> Path:
     return path
 
 
+# repo_root is not a setting: the caller decides which repository a run is about.
+_SETTING_PARSERS: dict[str, Callable[[Any], Any]] = {
+    "base_ref": str,
+    "output_dir": Path,
+    "suggestions_dir": Path,
+    "report_path": Path,
+    "test_roots": _coerce_list,
+    "exclude_paths": _coerce_list,
+    "repair_attempts": int,
+    "update_existing_tests": _coerce_bool,
+    "dry_run": _coerce_bool,
+    "google_cloud_project": str,
+    "google_cloud_location": str,
+    "gemini_model": str,
+    "temperature": float,
+}
+
+# Each of these settings can also come from the environment, named in upper case
+# (dry_run <- DRY_RUN).
+_ENV_SETTINGS = (
+    "base_ref",
+    "output_dir",
+    "suggestions_dir",
+    "report_path",
+    "repair_attempts",
+    "update_existing_tests",
+    "dry_run",
+    "google_cloud_project",
+    "google_cloud_location",
+    "gemini_model",
+    "temperature",
+)
+
+
 def _apply_mapping(cfg: AppConfig, data: dict[str, Any]) -> None:
-    if not data:
-        return
-
-    if "repo_root" in data and data["repo_root"] is not None:
-        cfg.repo_root = Path(data["repo_root"]).resolve()
-    if "base_ref" in data and data["base_ref"] is not None:
-        cfg.base_ref = str(data["base_ref"])
-    if "output_dir" in data and data["output_dir"] is not None:
-        cfg.output_dir = Path(data["output_dir"])
-    if "suggestions_dir" in data and data["suggestions_dir"] is not None:
-        cfg.suggestions_dir = Path(data["suggestions_dir"])
-    if "report_path" in data and data["report_path"] is not None:
-        cfg.report_path = Path(data["report_path"])
-
-    if "source_roots" in data and data["source_roots"] is not None:
-        cfg.source_roots = _coerce_list(data["source_roots"])
-    if "test_roots" in data and data["test_roots"] is not None:
-        cfg.test_roots = _coerce_list(data["test_roots"])
-    if "exclude_paths" in data and data["exclude_paths"] is not None:
-        cfg.exclude_paths = _coerce_list(data["exclude_paths"])
-
-    if "repair_attempts" in data and data["repair_attempts"] is not None:
-        cfg.repair_attempts = int(data["repair_attempts"])
-    if "update_existing_tests" in data and data["update_existing_tests"] is not None:
-        cfg.update_existing_tests = _coerce_bool(data["update_existing_tests"])
-    if "dry_run" in data and data["dry_run"] is not None:
-        cfg.dry_run = _coerce_bool(data["dry_run"])
-
-    if "google_cloud_project" in data and data["google_cloud_project"] is not None:
-        cfg.google_cloud_project = str(data["google_cloud_project"])
-    if "google_cloud_location" in data and data["google_cloud_location"] is not None:
-        cfg.google_cloud_location = str(data["google_cloud_location"])
-    if "gemini_model" in data and data["gemini_model"] is not None:
-        cfg.gemini_model = str(data["gemini_model"])
-    if "temperature" in data and data["temperature"] is not None:
-        cfg.temperature = float(data["temperature"])
+    for name, parse in _SETTING_PARSERS.items():
+        value = data.get(name)
+        if value is not None:
+            setattr(cfg, name, parse(value))
 
 
 def _apply_env(cfg: AppConfig) -> None:
-    env_map = {
-        "BASE_REF": "base_ref",
-        "OUTPUT_DIR": "output_dir",
-        "SUGGESTIONS_DIR": "suggestions_dir",
-        "REPORT_PATH": "report_path",
-        "REPAIR_ATTEMPTS": "repair_attempts",
-        "UPDATE_EXISTING_TESTS": "update_existing_tests",
-        "DRY_RUN": "dry_run",
-        "GOOGLE_CLOUD_PROJECT": "google_cloud_project",
-        "GOOGLE_CLOUD_LOCATION": "google_cloud_location",
-        "GEMINI_MODEL": "gemini_model",
-        "TEMPERATURE": "temperature",
+    overrides = {
+        name: os.environ[name.upper()]
+        for name in _ENV_SETTINGS
+        if os.environ.get(name.upper())
     }
-    overrides: dict[str, Any] = {}
-    for env_key, attr in env_map.items():
-        if env_key in os.environ and os.environ[env_key] != "":
-            overrides[attr] = os.environ[env_key]
     _apply_mapping(cfg, overrides)

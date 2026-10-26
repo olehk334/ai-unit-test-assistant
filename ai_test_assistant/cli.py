@@ -2,18 +2,14 @@
 
 from __future__ import annotations
 
-import asyncio
 from pathlib import Path
-from typing import Optional
 
 import typer
 
+from .changed_files import GitError
 from .config import load_config
-from .pipeline import (
-    apply_suggested_updates,
-    run_generate_tests_for_file,
-    run_pr_assistant,
-)
+from .pipeline import run_generate_tests_for_file, run_pr_assistant
+from .suggested_updates import apply_suggested_updates
 
 
 app = typer.Typer(
@@ -26,33 +22,35 @@ app = typer.Typer(
 
 @app.command("generate-tests")
 def generate_tests_command(
-    source: Path = typer.Option(..., "--source", help="Source Python file."),
-    output_dir: Optional[Path] = typer.Option(
+    source: Path = typer.Option(
+        ..., "--source", help="Source Python file.", exists=True, dir_okay=False
+    ),
+    output_dir: Path | None = typer.Option(
         None, "--output-dir", help="Directory for generated test files."
     ),
-    repair_attempts: Optional[int] = typer.Option(
+    repair_attempts: int | None = typer.Option(
         None, "--repair-attempts", help="Number of repair attempts."
     ),
-    dry_run: Optional[bool] = typer.Option(
+    dry_run: bool | None = typer.Option(
         None,
         "--dry-run/--no-dry-run",
         help="Skip LLM calls and use a placeholder response.",
     ),
-    config_file: Optional[Path] = typer.Option(
+    config_file: Path | None = typer.Option(
         None, "--config", help="Path to ai-test-assistant.yml."
     ),
 ) -> None:
     """Generate pytest tests for a single source file."""
-    overrides: dict[str, object] = {}
-    if output_dir is not None:
-        overrides["output_dir"] = output_dir
-    if repair_attempts is not None:
-        overrides["repair_attempts"] = repair_attempts
-    if dry_run is not None:
-        overrides["dry_run"] = dry_run
-
-    cfg = load_config(config_path=config_file, cli_overrides=overrides)
-    result = asyncio.run(run_generate_tests_for_file(cfg, source.resolve()))
+    # Options left at None are ignored by load_config, so the file and env values apply.
+    cfg = load_config(
+        config_path=config_file,
+        cli_overrides={
+            "output_dir": output_dir,
+            "repair_attempts": repair_attempts,
+            "dry_run": dry_run,
+        },
+    )
+    result = run_generate_tests_for_file(cfg, source.resolve())
     typer.echo(f"Status: {result.status}")
     if result.generated_test_file:
         typer.echo(f"Generated: {result.generated_test_file}")
@@ -67,54 +65,53 @@ def generate_tests_command(
 
 @app.command("run-pr-assistant")
 def run_pr_assistant_command(
-    base_ref: Optional[str] = typer.Option(
+    base_ref: str | None = typer.Option(
         None, "--base-ref", help="Git base ref (e.g. origin/main)."
     ),
-    output_dir: Optional[Path] = typer.Option(
+    output_dir: Path | None = typer.Option(
         None, "--output-dir", help="Directory for generated test files."
     ),
-    suggestions_dir: Optional[Path] = typer.Option(
+    suggestions_dir: Path | None = typer.Option(
         None, "--suggestions-dir", help="Directory for suggested test updates."
     ),
-    report: Optional[Path] = typer.Option(
+    report: Path | None = typer.Option(
         None, "--report", help="Path to the markdown report file."
     ),
-    repair_attempts: Optional[int] = typer.Option(
+    repair_attempts: int | None = typer.Option(
         None, "--repair-attempts", help="Number of repair attempts."
     ),
-    dry_run: Optional[bool] = typer.Option(
+    dry_run: bool | None = typer.Option(
         None,
         "--dry-run/--no-dry-run",
         help="Skip LLM calls and use a placeholder response.",
     ),
-    update_existing_tests: Optional[bool] = typer.Option(
+    update_existing_tests: bool | None = typer.Option(
         None,
         "--update-existing-tests/--no-update-existing-tests",
         help="Suggest updates for existing related tests.",
     ),
-    config_file: Optional[Path] = typer.Option(
+    config_file: Path | None = typer.Option(
         None, "--config", help="Path to ai-test-assistant.yml."
     ),
 ) -> None:
     """Detect changed files and generate/suggest tests for them."""
-    overrides: dict[str, object] = {}
-    if base_ref is not None:
-        overrides["base_ref"] = base_ref
-    if output_dir is not None:
-        overrides["output_dir"] = output_dir
-    if suggestions_dir is not None:
-        overrides["suggestions_dir"] = suggestions_dir
-    if report is not None:
-        overrides["report_path"] = report
-    if repair_attempts is not None:
-        overrides["repair_attempts"] = repair_attempts
-    if dry_run is not None:
-        overrides["dry_run"] = dry_run
-    if update_existing_tests is not None:
-        overrides["update_existing_tests"] = update_existing_tests
-
-    cfg = load_config(config_path=config_file, cli_overrides=overrides)
-    result = asyncio.run(run_pr_assistant(cfg))
+    cfg = load_config(
+        config_path=config_file,
+        cli_overrides={
+            "base_ref": base_ref,
+            "output_dir": output_dir,
+            "suggestions_dir": suggestions_dir,
+            "report_path": report,
+            "repair_attempts": repair_attempts,
+            "dry_run": dry_run,
+            "update_existing_tests": update_existing_tests,
+        },
+    )
+    try:
+        result = run_pr_assistant(cfg)
+    except GitError as exc:
+        typer.echo(f"error: {exc}", err=True)
+        raise typer.Exit(code=1)
     typer.echo(
         f"Changed files: {len(result.changed_files)}  "
         f"Processed: {len(result.file_results)}"
@@ -129,7 +126,7 @@ def apply_suggestions_command(
         "--suggestions-dir",
         help="Directory containing the suggested test updates.",
     ),
-    repo_root: Optional[Path] = typer.Option(
+    repo_root: Path | None = typer.Option(
         None, "--repo-root", help="Repo root to apply suggestions into."
     ),
     strip_header: bool = typer.Option(

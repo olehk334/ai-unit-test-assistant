@@ -17,6 +17,7 @@ services:
       dockerfile: services/analysis_worker/Dockerfile
     environment:
       DRY_RUN: "true"
+      LLM_CACHE_POLICY: "lru"  # "lfu" to compare eviction policies on the hit-ratio panel
     ports:
       - "8080:8080"
     volumes:

@@ -40,7 +40,8 @@ def run_pytest(
         return PytestResult(
             passed=False,
             exit_code=-1,
-            stdout=(exc.stdout or "").decode("utf-8", errors="ignore")
+            # TimeoutExpired keeps the partial output as bytes on POSIX, even with text=True.
+            stdout=exc.stdout.decode("utf-8", errors="ignore")
             if isinstance(exc.stdout, bytes)
             else (exc.stdout or ""),
             stderr=f"pytest timed out after {timeout_seconds}s",

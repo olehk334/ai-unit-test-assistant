@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-import asyncio
 import hashlib
 import time
 from dataclasses import dataclass
 from typing import Any
 
-from .cache import LRUCache
+from .cache import LFUCache, LRUCache
 from .config import AppConfig
 
 
@@ -48,7 +47,11 @@ class LlmClient:
     costs nothing. Pass a long-lived cache to share it across pipeline runs.
     """
 
-    def __init__(self, config: AppConfig, response_cache: LRUCache | None = None):
+    def __init__(
+        self,
+        config: AppConfig,
+        response_cache: LRUCache | LFUCache | None = None,
+    ):
         self._config = config
         self._client: Any | None = None
         self.response_cache = response_cache
@@ -85,7 +88,7 @@ class LlmClient:
         self._client = genai.Client(**kwargs)
         return self._client
 
-    async def generate(self, system_instruction: str, prompt: str) -> str:
+    def generate(self, system_instruction: str, prompt: str) -> str:
         """Generate a response. In dry-run mode returns a fixed stub."""
         cache_key = None
         if self.response_cache is not None:
@@ -94,32 +97,27 @@ class LlmClient:
             if cached is not None:
                 return cached
 
-        text = await self._generate_uncached(system_instruction, prompt)
+        text = self._generate_uncached(system_instruction, prompt)
 
         if self.response_cache is not None and cache_key is not None:
             self.response_cache.put(cache_key, text)
         return text
 
-    async def _generate_uncached(self, system_instruction: str, prompt: str) -> str:
+    def _generate_uncached(self, system_instruction: str, prompt: str) -> str:
         if self._config.dry_run:
             self.usage.calls += 1
             return _DRY_RUN_TEMPLATE
 
         client = self._ensure_client()
-        loop = asyncio.get_running_loop()
-
-        def _call() -> Any:
-            return client.models.generate_content(  # type: ignore[no-any-return]
-                model=self._config.gemini_model,
-                contents=prompt,
-                config={
-                    "system_instruction": system_instruction,
-                    "temperature": self._config.temperature,
-                },
-            )
-
         started = time.monotonic()
-        response = await loop.run_in_executor(None, _call)
+        response = client.models.generate_content(
+            model=self._config.gemini_model,
+            contents=prompt,
+            config={
+                "system_instruction": system_instruction,
+                "temperature": self._config.temperature,
+            },
+        )
         self.usage.calls += 1
         self.usage.total_seconds += time.monotonic() - started
 

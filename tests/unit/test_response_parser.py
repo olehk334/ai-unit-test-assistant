@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from ai_test_assistant.test_generator import (
+from ai_test_assistant.llm_test_code import (
     ValidationError,
     clean_llm_python_response,
     validate_python_test_code,

@@ -29,6 +29,8 @@ def _target() -> TestTarget:
         name="add",
         qualified_name="add",
         target_type="function",
+        start_line=1,
+        end_line=2,
         source_code="def add(a, b):\n    return a + b",
         reason="Function changed in PR",
     )

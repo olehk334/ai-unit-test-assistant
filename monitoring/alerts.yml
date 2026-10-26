@@ -2,9 +2,11 @@ groups:
   - name: ai-test-assistant
     rules:
       - alert: HighJobFailureRate
+        # sum() on both sides: dividing series that keep their status label
+        # matches failed with failed only, which is 1.0 on any failure.
         expr: >
-          rate(jobs_processed_total{status="failed"}[15m])
-            / clamp_min(rate(jobs_processed_total[15m]), 1e-9) > 0.2
+          sum(rate(jobs_processed_total{status="failed"}[15m]))
+            / clamp_min(sum(rate(jobs_processed_total[15m])), 1e-9) > 0.2
         for: 15m
         labels:
           severity: warning

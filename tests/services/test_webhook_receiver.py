@@ -46,7 +46,7 @@ def _pr_event(action: str = "opened") -> dict:
 
 def _post(client: TestClient, event: dict, github_event: str = "pull_request", sign: bool = True):
     body = json.dumps(event).encode()
-    headers = {"X-GitHub-Event": github_event, "X-GitHub-Delivery": "delivery-1"}
+    headers = {"X-GitHub-Event": github_event}
     if sign:
         headers["X-Hub-Signature-256"] = _sign(body)
     return client.post("/webhook", content=body, headers=headers)
@@ -96,10 +96,12 @@ def test_publishes_job_for_opened_pr(
     response = _post(client, _pr_event())
 
     assert response.status_code == 202
-    assert len(published) == 1
-    job = published[0]
-    assert job["repo_full_name"] == "olehk334/calculator"
-    assert job["pr_number"] == 7
-    assert job["head_sha"] == "abc123"
-    assert job["base_ref"] == "main"
-    assert job["delivery_id"] == "delivery-1"
+    assert published == [
+        {
+            "repo_full_name": "olehk334/calculator",
+            "clone_url": "https://github.com/olehk334/calculator.git",
+            "pr_number": 7,
+            "head_sha": "abc123",
+            "base_ref": "main",
+        }
+    ]

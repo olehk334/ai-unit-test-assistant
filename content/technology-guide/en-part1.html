@@ -1,0 +1,98 @@
+<section id="en-cloud">
+<h2>Part 1 · Distributed Systems &amp; Cloud Architecture</h2>
+<p class="part-lead">What changes when a program becomes several programs on several machines, and the four ideas that make that manageable: microservices, events, serverless, and the patterns for scaling.</p>
+
+<h3 id="en-1-1">1.1 What "distributed" really means</h3>
+<p>On one machine, a function call either returns or crashes, and both are immediate. Across a network, there is a third outcome: <em>you do not know</em>. The request may have been lost, the answer may have been lost, or the other side may still be working. Everything in distributed systems follows from living with that third outcome.</p>
+<p>Three facts you cannot engineer away:</p>
+<ul>
+  <li><strong>Partial failure.</strong> One machine restarts while the others keep going. The system has to make sense in the middle of that.</li>
+  <li><strong>No shared clock, no shared memory.</strong> Two services cannot look at the same variable; they can only send each other messages, and messages take time and can arrive twice or out of order.</li>
+  <li><strong>Latency is a cost.</strong> A function call takes nanoseconds, a network call takes milliseconds, and a cold container takes seconds. Design around the slow parts.</li>
+</ul>
+<div class="key"><p><strong>The one-line rule:</strong> assume every message can be lost, delayed or duplicated, and design so that the system still ends in the right state.</p></div>
+
+<h3 id="en-1-2">1.2 Microservices: split where requirements conflict</h3>
+<p>A microservice is a separately deployed program with one job that talks to others over the network. Splitting has a real price: every boundary adds a network hop, a message format to keep stable, and one more thing to deploy and monitor. So the question is never "how small can a service be?" but "where do requirements conflict so much that one program cannot satisfy both?"</p>
+<p>This project has exactly one such conflict, and so it has exactly two services:</p>
+<div class="widget" data-widget="split"></div>
+<p>GitHub gives a webhook ten seconds to answer and then marks it failed, so the receiver must be tiny and fast and reachable from the internet. The analysis takes minutes and should be reachable by nobody. One program could not be both. Two programs with a queue between them can.</p>
+<p>What the split costs here: a message contract (five JSON fields) that both sides must agree on, and two Docker images instead of one. What it buys: each side can fail, scale and be deployed on its own.</p>
+<div class="key"><p><strong>Rule of thumb:</strong> split along conflicting requirements (latency, exposure, resource needs, release cadence), never along nouns like "user service" and "order service" just because they are different words.</p></div>
+
+<h3 id="en-1-3">1.3 Event-driven systems: talk through messages, not calls</h3>
+<p>In a <em>call</em>, the caller waits for the answer and fails if the callee is down. In an <em>event</em>, the producer writes a message to a topic and moves on; whoever is subscribed receives it when they are ready. The producer does not know who listens, and a consumer that is down simply gets the message later. That decoupling is the whole point.</p>
+<p>Here is one job of this project as a sequence of messages, with the time budgets that shape the design:</p>
+<div class="widget" data-widget="sequence"></div>
+<p>The vocabulary you need:</p>
+<div class="tbl-wrap"><table>
+<thead><tr><th>Term</th><th>Meaning</th><th>In this project</th></tr></thead>
+<tbody>
+<tr><td>Topic</td><td>a named stream producers write to</td><td><code>pr-analysis-jobs</code></td></tr>
+<tr><td>Subscription</td><td>a consumer's view of a topic, with its own delivery state</td><td>one push subscription to the worker</td></tr>
+<tr><td>Push vs pull</td><td>the broker calls the consumer, or the consumer asks the broker</td><td>push: the worker is a plain HTTP service</td></tr>
+<tr><td>Ack</td><td>the consumer confirms the message is done; the broker deletes it</td><td>HTTP 200 from <code>/pubsub</code></td></tr>
+<tr><td>Ack deadline</td><td>how long the broker waits for the ack before redelivering</td><td>600 s</td></tr>
+<tr><td>At-least-once</td><td>a message is never lost, but may be delivered more than once</td><td>the reason the worker is idempotent</td></tr>
+<tr><td>Dead-letter topic</td><td>where a message goes after too many failed deliveries</td><td>after 5 attempts</td></tr>
+</tbody></table></div>
+<p>Every message lives through the same states. Notice that there are two ways out: acknowledged, or parked in the dead-letter topic after five failures. There is no "lost".</p>
+<div class="widget" data-widget="lifecycle"></div>
+
+<h4>Idempotency: why "at least once" is enough</h4>
+<p>Exactly-once delivery across a network is impossible in general: the broker cannot tell whether a consumer that stopped answering had finished the work or not. So brokers promise at-least-once and push the problem to the consumer: processing the same message twice must have the same effect as processing it once. That property is called <strong>idempotency</strong>, and it is usually implemented with a key that identifies the work and a marker that says it was done.</p>
+<p>In this project the key is <code>repo/pr/sha</code> and the marker is the JSON report in Cloud Storage at that path. Pick where the worker crashes and watch what the second delivery does:</p>
+<div class="widget" data-widget="idempotency"></div>
+<div class="project"><p class="tag">In this project</p><p>The receiver publishes; the worker checks for the marker before doing anything, writes it only on success, and answers 500 on any failure so the broker retries. A malformed message is acknowledged immediately: retrying it could never help, and it would otherwise occupy the queue for five attempts.</p></div>
+
+<h3 id="en-1-4">1.4 Serverless: containers that exist only while there is work</h3>
+<p>"Serverless" does not mean no servers; it means you do not manage them. You give the platform a container image and it starts instances when requests arrive, adds more when traffic grows, and stops them all when it goes quiet. You pay for the time instances run.</p>
+<div class="widget" data-widget="serverless"></div>
+<p>Two consequences shape the code:</p>
+<ul>
+  <li><strong>Stateless by construction.</strong> An instance can disappear at any time, so nothing that matters may live only in its memory. State belongs in the queue (what is still to do) and in storage (what was done). The worker's LLM response cache lives in memory on purpose: losing it costs a few repeated calls, never correctness.</li>
+  <li><strong>Cold starts are real.</strong> The first request after idle waits for a container to boot (hundreds of milliseconds to seconds). Fine for a background worker, something to measure for a user-facing API; the usual fix is a minimum number of warm instances, which costs money.</li>
+</ul>
+<div class="project"><p class="tag">In this project</p><p>Both services run on Cloud Run with scale-to-zero. The worker is deployed with <code>concurrency = 1</code>: one request per instance at a time, because the job shells out to git and pytest and would not share a CPU well. More load means more instances, not more threads. The code mirrors that with a lock around each job.</p></div>
+
+<h3 id="en-1-5">1.5 Scalability patterns</h3>
+<h4>Queue-based load levelling</h4>
+<p>Traffic arrives in bursts; work takes a fixed time. Without a queue, a burst either overloads the workers or is rejected. With a queue, the burst waits and is drained at the workers' pace. Try it: raise the burst, then add workers.</p>
+<div class="widget" data-widget="queue"></div>
+<h4>Horizontal scaling</h4>
+<p>Scaling <em>up</em> means a bigger machine; scaling <em>out</em> means more machines. Out is the cloud's natural direction and it needs one thing from you: units of work that do not share state. A job here is one PR at one commit, writing to its own folder, so any number of workers can run side by side.</p>
+<h4>Retries, backoff and the dead-letter queue</h4>
+<p>A retry fixes transient failures (a network blip, a model outage of a minute) and makes permanent failures worse (a job that always crashes would loop forever). So retries are bounded, spaced out with growing delays (<em>backoff</em>), and the message is finally parked where a person can look at it. Five attempts and a dead-letter topic are a typical setting.</p>
+<h4>Idempotent consumers</h4>
+<p>The pattern from 1.3: retries are only safe because doing the work twice is harmless. The marker-before-ack ordering is what makes that true.</p>
+<div class="key"><p><strong>How the four fit together:</strong> the queue absorbs bursts, horizontal scaling drains them, bounded retries handle transient failures, and idempotency makes those retries safe. Remove any one and the others stop being safe.</p></div>
+
+<h3 id="en-1-6">1.6 The three clouds</h3>
+<p>The building blocks have different names on every cloud and the same shapes. Learn the shapes; the names are a lookup.</p>
+<div class="tbl-wrap"><table>
+<thead><tr><th>Shape</th><th>GCP (used here)</th><th>AWS</th><th>Azure</th></tr></thead>
+<tbody>
+<tr><td>Run a container, scale to zero</td><td>Cloud Run</td><td>App Runner, Lambda (container images)</td><td>Container Apps</td></tr>
+<tr><td>Topic + subscriptions</td><td>Pub/Sub</td><td>SNS (topic) + SQS (queue)</td><td>Service Bus topics</td></tr>
+<tr><td>Dead letters</td><td>dead-letter topic</td><td>SQS dead-letter queue</td><td>Service Bus dead-letter queue</td></tr>
+<tr><td>Object storage</td><td>Cloud Storage</td><td>S3</td><td>Blob Storage</td></tr>
+<tr><td>Container images</td><td>Artifact Registry</td><td>ECR</td><td>Container Registry</td></tr>
+<tr><td>Build images from source</td><td>Cloud Build</td><td>CodeBuild</td><td>ACR Tasks</td></tr>
+<tr><td>Service identity and permissions</td><td>IAM service accounts, OIDC push auth</td><td>IAM roles</td><td>Managed Identity</td></tr>
+<tr><td>Managed metrics</td><td>Managed Service for Prometheus</td><td>Amazon Managed Prometheus</td><td>Azure Monitor managed Prometheus</td></tr>
+<tr><td>Managed LLM</td><td>Vertex AI (Gemini)</td><td>Bedrock</td><td>Azure OpenAI</td></tr>
+</tbody></table></div>
+<p>What differs in practice: on AWS the topic and the queue are two products you wire together (SNS fans out, SQS holds); on GCP and Azure one product does both. Identity is the part that is most cloud-specific; everything else moves with a few lines of configuration.</p>
+
+<h3 id="en-1-7">1.7 The whole picture in this project</h3>
+<div class="widget" data-widget="architecture"></div>
+<p>Read it as a story: GitHub signs a webhook; the receiver verifies the signature, filters to the three PR actions that matter, publishes a five-field job and answers in milliseconds. Pub/Sub pushes the job to the worker and keeps it until the worker says 200. The worker clones, runs the eight steps, uploads artifacts to <code>repo/pr/sha/</code>, posts a commit status, and acknowledges. A job that fails five times lands in the dead-letter topic with its own subscription for inspection.</p>
+<p>Verified locally with the Pub/Sub emulator: a signed webhook was queued and processed end to end, and a job with a non-existent base branch was delivered five times and then dead-lettered.</p>
+
+<h3 id="en-1-8">1.8 Check yourself</h3>
+<details><summary>Why is exactly-once delivery impossible, and what do we do instead?</summary><p>After sending a message, the broker cannot distinguish "consumer finished and the ack was lost" from "consumer crashed before finishing". Either way it must redeliver, so delivery is at least once. The consumer makes the duplicate harmless with an idempotency key and a marker written only on success.</p></details>
+<details><summary>What would break if the worker wrote the marker before uploading the artifacts?</summary><p>A crash between the marker and the upload would leave a job marked done with no artifacts, and every retry would skip it. The marker must be the last durable effect, or the retry cannot repair a half-done job.</p></details>
+<details><summary>Why push delivery rather than a worker that pulls?</summary><p>With push the worker is an ordinary HTTP service, scaled by the platform, with no subscriber loop to keep alive. Pull is better when jobs are very long or when the consumer must control its own rate.</p></details>
+<details><summary>Why not make the receiver do the analysis in a background thread?</summary><p>Because a Cloud Run instance may be stopped as soon as it has answered the request; background work in it is not guaranteed to finish. Work that must complete goes through the queue.</p></details>
+<details><summary>Where would you add a metric for queue length?</summary><p>Nowhere in the code: the broker already knows it (<code>num_undelivered_messages</code> in Cloud Monitoring). A metric measured by the worker would be a worse copy of a number the platform already exports.</p></details>
+</section>

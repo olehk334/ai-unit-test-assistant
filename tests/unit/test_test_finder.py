@@ -13,6 +13,8 @@ def _make_target(name: str) -> TestTarget:
         name=name,
         qualified_name=name,
         target_type="function",
+        start_line=1,
+        end_line=1,
         source_code=f"def {name}(): ...",
         reason="test",
     )
@@ -67,6 +69,22 @@ def test_short_target_name_does_not_match_substrings(tmp_path: Path) -> None:
     )
 
     found = find_related_tests(source, [_make_target("add")], repo, ["tests"])
+
+    assert found == []
+
+
+def test_ignores_tests_the_assistant_generated(tmp_path: Path) -> None:
+    repo = tmp_path
+    (repo / "examples").mkdir()
+    source = repo / "examples" / "user_service.py"
+    source.write_text("def normalize_user_name(name): return name\n", encoding="utf-8")
+    generated = repo / "tests" / "generated" / "test_examples_user_service_generated.py"
+    generated.parent.mkdir(parents=True)
+    generated.write_text(
+        "from examples.user_service import normalize_user_name\n", encoding="utf-8"
+    )
+
+    found = find_related_tests(source, [_make_target("normalize_user_name")], repo, ["tests"])
 
     assert found == []
 

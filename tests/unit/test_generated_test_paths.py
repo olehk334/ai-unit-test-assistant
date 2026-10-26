@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ai_test_assistant.pipeline import generated_test_path_for
+from ai_test_assistant.test_generator import generated_test_path_for
 
 
 def test_same_stem_sources_get_distinct_names(tmp_path: Path) -> None:

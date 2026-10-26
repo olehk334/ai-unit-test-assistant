@@ -1,0 +1,74 @@
+<section id="en-monitoring">
+<h2>Part 2 · Monitoring with Prometheus and Grafana</h2>
+<p class="part-lead">How a running service is turned into numbers, how those numbers are stored and queried, and how a dashboard and an alert are built from them.</p>
+
+<h3 id="en-2-1">2.1 Metrics, logs, traces: three different questions</h3>
+<p>Observability is the ability to answer questions about a running system from the outside. The three kinds of data answer three kinds of question, and metrics are the cheapest of the three.</p>
+<div class="widget" data-widget="pillars"></div>
+<p>A metric is a number with a name and a time: <em>at 14:03:05, jobs processed = 8</em>. Thousands of such numbers per second cost almost nothing to store, so metrics are always on, and questions like "how many per minute?" or "what is the slowest 5 %?" are answered in milliseconds. What a metric cannot tell you is <em>which</em> job failed or why; for that you read the log line the worker printed.</p>
+
+<h3 id="en-2-2">2.2 The pull model</h3>
+<p>Prometheus does not wait for services to send data. It keeps a list of targets and asks each one for its current values on a schedule: an HTTP GET to <code>/metrics</code>, which returns a plain text page. The service needs no library beyond a tiny one that formats the page, and it does not need to know that Prometheus exists.</p>
+<div class="widget" data-widget="pull"></div>
+<p>Why pull and not push: Prometheus controls the rate and knows immediately when a target stops answering (the <code>up</code> metric drops to 0), the service cannot flood the monitoring system, and a developer can open <code>/metrics</code> in a browser to see exactly what is being reported. The cost is that Prometheus must be able to reach the service; for short-lived batch jobs there is a push gateway, and in the cloud a managed collector scrapes on Prometheus's behalf.</p>
+<p>Each scrape produces one <em>sample</em> per series: (timestamp, value). A <em>series</em> is a metric name plus a set of labels. Prometheus stores samples compressed (about 1–2 bytes each), which is why keeping every 5-second sample for weeks is affordable.</p>
+
+<h3 id="en-2-3">2.3 The metric types</h3>
+<div class="widget" data-widget="types"></div>
+<ul>
+  <li><strong>Counter.</strong> A number that only increases: requests served, jobs failed, tokens sent. Its raw value is rarely interesting (it depends on when the process started); its <em>rate of change</em> is. Everything in this project is a counter except the duration.</li>
+  <li><strong>Gauge.</strong> A number that goes up and down: queue length, memory in use, temperature. You read it directly.</li>
+  <li><strong>Histogram.</strong> Counts observations into cumulative buckets: how many jobs took ≤ 5 s, ≤ 15 s, ≤ 30 s… plus a sum and a count. It is the only type from which you can compute percentiles later, across many instances.</li>
+  <li><strong>Summary.</strong> Percentiles computed inside the service. Precise but not aggregatable across instances; histograms are preferred.</li>
+</ul>
+<h4>Why a counter and not a gauge for "jobs"</h4>
+<p>If the worker reported "jobs in the last minute" as a gauge, a restart would lose the window and two instances could not be added together. A counter is restart-safe (Prometheus detects the reset) and additive (sum the rates of all instances). The rule: if it only ever goes up, make it a counter and let the query do the arithmetic.</p>
+<h4>rate(): from a counter to a speed</h4>
+<p>Move the window and watch what <code>rate()</code> does at the restart in the middle:</p>
+<div class="widget" data-widget="rate"></div>
+<p>A longer window gives a smoother, laggier line; a shorter one reacts faster but is noisy. Alert rules use long windows (15 minutes here) so that one odd scrape cannot fire them; dashboards use shorter ones. The window must contain at least two samples, so with a 5-second scrape interval the minimum useful window is about 15 seconds.</p>
+
+<h3 id="en-2-4">2.4 Labels and the cardinality trap</h3>
+<p>A label splits one metric into several series: <code>jobs_processed_total{status="processed"}</code>, <code>{status="failed"}</code>, and so on. That is how one metric answers "how many failed?" without a second metric. Every distinct combination of label values is a separate series that Prometheus stores and scans, so labels must have <em>few, bounded</em> values: a status (4 values), a cache policy (2 values), an HTTP method. A label whose values are unbounded — a user id, a PR number, a commit SHA — creates a new series per value and will eventually exhaust memory. That mistake is called a cardinality explosion, and it is the most common way to break a Prometheus server.</p>
+<div class="project"><p class="tag">In this project</p><p>Labels: <code>status</code> on jobs (processed, failed, skipped, ignored), <code>result</code> on generated test files (passed, failed), <code>policy</code> on cache counters (lru, lfu). The repository name and PR number are deliberately <em>not</em> labels; they live in the log line and in the Cloud Storage path.</p></div>
+
+<h3 id="en-2-5">2.5 PromQL in five expressions</h3>
+<div class="tbl-wrap"><table>
+<thead><tr><th>Expression</th><th>What it returns</th></tr></thead>
+<tbody>
+<tr><td><code>jobs_processed_total</code></td><td>an <em>instant vector</em>: the latest value of every series with that name</td></tr>
+<tr><td><code>jobs_processed_total[5m]</code></td><td>a <em>range vector</em>: all samples of the last five minutes, per series; only functions consume it</td></tr>
+<tr><td><code>rate(jobs_processed_total[5m]) * 60</code></td><td>jobs per minute, per status</td></tr>
+<tr><td><code>sum by (status) (rate(…[5m]))</code></td><td>the same, added up across instances but still split by status</td></tr>
+<tr><td><code>histogram_quantile(0.95, sum by (le) (rate(job_duration_seconds_bucket[15m])))</code></td><td>the estimated 95th percentile of job duration</td></tr>
+</tbody></table></div>
+<h4>histogram_quantile: percentiles from buckets</h4>
+<p>A histogram never stores the individual durations, only how many fell below each boundary. To find p95 Prometheus walks the cumulative counts until it passes 95 % of the total, then assumes the observations inside that bucket are spread evenly and interpolates. Move the quantile and see which bucket decides the answer:</p>
+<div class="widget" data-widget="quantile"></div>
+<p>The precision is the width of the bucket, so buckets must be placed where the decisions are. This project's buckets end at 600 s because that is the Pub/Sub ack deadline: the question "are jobs approaching the deadline?" needs resolution near 300 and 600 s, not near 5 s.</p>
+<h4>Vector matching: the bug the project shipped</h4>
+<p>Binary operators (<code>/</code>, <code>+</code>, <code>-</code>) pair series from the left and right sides by their labels. If the label sets differ, the series without a partner simply disappears. That makes ratios easy to get wrong:</p>
+<div class="widget" data-widget="matching"></div>
+<p>The project's alert for "more than 20 % of jobs failing" had exactly this bug: it divided the <code>failed</code> series by every status series and matched only with itself, so the ratio was 1.0 after any single failure. It was found by writing a unit test for the rule, and the fix is <code>sum()</code> on both sides.</p>
+
+<h3 id="en-2-6">2.6 Alert rules: conditions with patience</h3>
+<p>An alert rule is a PromQL expression evaluated on a schedule plus a <code>for:</code> duration. When the expression returns something, the alert becomes <em>pending</em>; only when it has stayed true for the whole <code>for</code> period does it become <em>firing</em>. That one knob removes most false alarms: a short spike never fires.</p>
+<div class="widget" data-widget="alert"></div>
+<p>Prometheus decides <em>that</em> an alert fires. A second program, Alertmanager, decides <em>who hears about it</em>: it groups related alerts, silences known ones, and routes to Slack, email or a pager. The project runs Prometheus with two rules and leaves Alertmanager out, because the rules can be inspected and tested without it.</p>
+<h4>Testing a rule</h4>
+<p>Rules are code and can be unit-tested with <code>promtool test rules</code>: you declare synthetic series (<code>0+9x40</code> means "start at 0, add 9 every step, 40 steps"), an evaluation time, and the alerts you expect. The project's test feeds a 10 % failure rate and expects nothing, then a 50 % rate and expects the alert; the old expression failed the first case.</p>
+<div class="project"><p class="tag">In this project</p><p><code>HighJobFailureRate</code>: more than 20 % failing over 15 minutes, <code>for: 15m</code>. <code>SlowAnalysisJobs</code>: p95 above 300 s for 10 minutes, because at 600 s the ack deadline causes redelivery and duplicate work. Both are in <code>monitoring/alerts.yml</code> with tests in <code>alerts_test.yml</code>.</p></div>
+
+<h3 id="en-2-7">2.7 Grafana: dashboards as code</h3>
+<p>Grafana does not store metrics; it asks Prometheus and draws the answer. A dashboard is a grid of panels, each panel one query plus how to show it (a time series, a single number, a gauge) and a unit. Grafana can load dashboards and data sources from files at start-up, which means the dashboard lives in git next to the code and is identical on every machine.</p>
+<div class="widget" data-widget="dashboard"></div>
+<p>What makes a dashboard useful rather than decorative: the first row answers "is it healthy?" (throughput, errors, latency), the second "what does it cost or produce?" (tokens, pass ratio), and every panel has a unit. Six panels that each answer one question beat thirty that answer none.</p>
+<div class="project"><p class="tag">In this project</p><p><code>monitoring/docker-compose.yml</code> starts the worker in dry-run mode, Prometheus with the scrape config and rules, and Grafana with the data source and dashboard provisioned from <code>monitoring/grafana/</code>. <code>python send_test_job.py --repeat 5</code> creates traffic. The same <code>/metrics</code> endpoint works unchanged with Google's managed Prometheus on Cloud Run.</p></div>
+
+<h3 id="en-2-8">2.8 Check yourself</h3>
+<details><summary>Why does a counter restart not corrupt rate()?</summary><p>Prometheus treats any decrease in a counter as a reset and adds the increase before the reset to the increase after it. The only thing lost is whatever happened between the last scrape and the restart.</p></details>
+<details><summary>When is a gauge the right type?</summary><p>When the value itself is the answer and it can go down: queue length, memory, number of busy workers. If you find yourself wanting the rate of a gauge, it probably should have been a counter.</p></details>
+<details><summary>What is wrong with a label for the PR number?</summary><p>Unbounded values: every PR creates a new series forever. Put the PR number in the log line and in the artifact path instead.</p></details>
+<details><summary>Why sum by (le) before histogram_quantile?</summary><p>Each instance exports its own bucket series. Adding them per bucket boundary gives one histogram for the whole service; then the quantile is computed once, correctly, across instances.</p></details>
+<details><summary>What does for: 15m protect against, and what does it cost?</summary><p>It stops a brief spike from paging anyone. The cost is that a real outage is reported 15 minutes late; choose the duration by how fast a human could act anyway.</p></details>
+</section>

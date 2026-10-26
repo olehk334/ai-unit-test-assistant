@@ -20,7 +20,6 @@ def send_job(worker_url: str, clone_url: str, repo_full_name: str) -> str:
         "pr_number": 1,
         "head_sha": "HEAD",
         "base_ref": "main",
-        "delivery_id": "local-test",
     }
     envelope = {
         "message": {"data": base64.b64encode(json.dumps(job).encode()).decode()}

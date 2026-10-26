@@ -21,7 +21,6 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0",
-    "pytest-asyncio>=0.23",
     # Needed to unit-test the services in services/ (GCP SDKs are imported
     # lazily by the apps, so they are not needed here).
     "fastapi>=0.115",
@@ -37,6 +36,5 @@ where = ["."]
 include = ["ai_test_assistant*"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests/unit", "tests/services"]
-asyncio_mode = "auto"
+testpaths = ["tests/unit", "tests/services", "tests/integration"]
 filterwarnings = ["ignore::DeprecationWarning"]

@@ -1,0 +1,57 @@
+<section id="en-algorithms">
+<h2>Part 3 · Topological Sort and the LRU / LFU Caches</h2>
+<p class="part-lead">Two classic algorithms you can run by hand below: one orders work that depends on other work, the other decides what to forget when memory is full.</p>
+
+<h3 id="en-3-1">3.1 Dependencies are a graph</h3>
+<p>Whenever "A must happen before B", you have a directed edge A → B. Files that import each other, build steps, database migrations, courses with prerequisites, tasks in a schedule: all are directed graphs. A valid order of doing things is one where every edge points forward. Such an order exists only if the graph has no cycle, and a graph without cycles is called a <em>DAG</em> (directed acyclic graph).</p>
+<p>Two ideas carry the whole topic: the <strong>in-degree</strong> of a node is how many edges point into it, which is to say how many things it still waits for; a node with in-degree 0 can go right now.</p>
+
+<h3 id="en-3-2">3.2 Kahn's algorithm, step by step</h3>
+<ol>
+  <li>Count the in-degree of every node.</li>
+  <li>Put every node with in-degree 0 into a ready queue.</li>
+  <li>Take a node from the queue, emit it, and for each edge out of it lower the target's in-degree by one; a target that reaches 0 joins the queue.</li>
+  <li>Repeat until the queue is empty.</li>
+</ol>
+<p>Press <em>Step</em> and watch the in-degrees fall. Then switch to the example with a cycle and see what happens when the queue runs dry early:</p>
+<div class="widget" data-widget="kahn"></div>
+<p>Two properties fall out of the procedure for free:</p>
+<ul>
+  <li><strong>Cycle detection.</strong> If nodes remain when the queue is empty, each of them still waits for something, and that something waits for them: they are in a cycle or downstream of one. No extra bookkeeping needed.</li>
+  <li><strong>Deterministic ties.</strong> When several nodes are ready at once, any of them is a valid next choice. Taking them from a plain queue gives one valid order; taking the one with the smallest original position (a min-heap keyed by position) gives the <em>same</em> order on every run, which matters for reproducible output.</li>
+</ul>
+<h4>Cost</h4>
+<p>Every node enters and leaves the queue once, and every edge is looked at once when its source is emitted: O(V + E) with a plain queue. The heap adds a logarithm, O((V + E) log V), to buy the stable tie-break. For a pull request with a handful of files this is microseconds either way; the point of knowing the cost is knowing what you traded for the determinism.</p>
+<h4>The other way: depth-first search</h4>
+<p>You can also topologically sort by running a depth-first search and listing nodes in the reverse of the order in which they are finished. It needs the same O(V + E) and detects cycles by meeting a node that is still "in progress". Kahn's version is preferred when you want the ready set explicitly, for example to run independent nodes in parallel: everything in the queue at the same moment can go at once.</p>
+<div class="project"><p class="tag">In this project</p><p><code>import_graph.py</code> builds the graph over the changed files only (imports read with <code>ast</code>, including relative imports), runs Kahn with a min-heap keyed by the file's original position, keeps cycle files in their original order and lists them in the report. The order decides what the report shows first and makes sure a module is processed before any tests exist for its importers.</p></div>
+
+<h3 id="en-3-3">3.3 Caches: remembering what is expensive to recompute</h3>
+<p>A cache is a small, fast store in front of a slow operation. Ask the cache first; on a <em>hit</em> return the stored answer, on a <em>miss</em> do the slow work and store the result. The only interesting decision a cache makes is what to throw away when it is full. That decision is the <em>eviction policy</em>, and the quality of a cache is its <em>hit ratio</em>: hits divided by all lookups.</p>
+<p>Two conditions make caching correct: the same input must always produce the same answer (otherwise a hit returns a stale value), and the key must contain everything that could change the answer. In this project the slow operation is a Gemini call, the key is a hash of model, temperature, system instruction and prompt, and temperature 0 is what makes the first condition true.</p>
+
+<h3 id="en-3-4">3.4 LRU: forget the least recently used</h3>
+<p>LRU bets on <em>temporal locality</em>: what was used a moment ago will probably be used again soon. The classic O(1) design keeps two structures that point at the same nodes: a hash map from key to node, for lookup, and a doubly linked list in order of use, for eviction. A lookup moves its node to the front with two pointer swaps; eviction removes whatever is at the back.</p>
+<p>Capacity is 3 here. Put A, B, C, then get A, then put D, and watch which node is evicted:</p>
+<div class="widget" data-widget="lru"></div>
+<p>The two sentinels, HEAD and TAIL, are a trick that removes every special case: the list is never empty, so inserting at the front and removing at the back never check for null pointers. Python's <code>OrderedDict</code> implements the same structure; the project writes it out to show the mechanism.</p>
+
+<h3 id="en-3-5">3.5 LFU: forget the least frequently used</h3>
+<p>LFU bets on <em>popularity</em>: what has been used many times will be used again, even if not recently. The O(1) design keeps three maps: key → value, key → use count, and use count → the keys at that count in insertion order, plus a pointer to the smallest count. A hit moves the key one bucket up; eviction takes the oldest key from the lowest bucket (so LRU breaks ties within a bucket).</p>
+<p>Same buttons, different policy. Put A, B, C, then get A twice, then put D and E: A survives because it is popular, and the newest keys evict each other:</p>
+<div class="widget" data-widget="lfu"></div>
+<p>LFU's weakness is the mirror of its strength: a key that was hot an hour ago keeps its high count and refuses to leave, while new keys fight over the lowest bucket. Production LFU implementations decay counts over time for that reason.</p>
+
+<h3 id="en-3-6">3.6 Which one wins depends on the workload</h3>
+<p>Run both policies on two access patterns. The first is "a developer re-pushes a branch": the same few prompts come back in bursts. The second is "a shared module appears in most PRs": one hot key among many one-off keys.</p>
+<div class="widget" data-widget="race"></div>
+<p>There is no best policy, only a best policy for a workload. That is why the project makes the policy a one-line setting and exports the hit ratio per policy: the question can be answered on the dashboard with real jobs instead of being argued about.</p>
+<div class="project"><p class="tag">In this project</p><p><code>cache.py</code> holds both classes with hit and miss counters. <code>llm_client.py</code> looks the prompt up before calling Gemini. The worker owns one 256-entry cache for the whole process and chooses the class from <code>LLM_CACHE_POLICY</code> (<code>lru</code> by default). Measured on two identical jobs: 3 misses, then 3 hits and 0 LLM calls, under both policies.</p></div>
+
+<h3 id="en-3-7">3.7 Check yourself</h3>
+<details><summary>Why does Kahn's algorithm detect cycles without extra code?</summary><p>A node in a cycle always has at least one incoming edge from another cycle member that is never emitted, so its in-degree never reaches 0 and it never enters the queue. The leftovers when the queue is empty are exactly those nodes and anything behind them.</p></details>
+<details><summary>Why is the doubly linked list needed? Would a singly linked one do?</summary><p>To move a node to the front you must unlink it, which requires updating its predecessor's pointer. With a singly linked list you would have to walk from the head to find the predecessor: O(n). The back pointer makes it O(1).</p></details>
+<details><summary>What must be in the cache key, and what must not?</summary><p>Everything that changes the answer: model, temperature, instruction, prompt. Nothing that does not: the project once included the clone directory path, so every job had unique keys and the cache never hit. Normalise the input before hashing.</p></details>
+<details><summary>When would LFU clearly beat LRU here?</summary><p>One worker serving many repositories where a few shared modules (say <code>models.py</code>) appear in most PRs: their prompts are hot all day, while each PR's other files are seen once. LRU would flush the hot entries on every burst; LFU keeps them.</p></details>
+<details><summary>Is the hand-written cache thread-safe, and does it matter?</summary><p>No, and not here: the worker handles one job at a time (Cloud Run concurrency 1 plus a lock). A shared cache under real concurrency would need a mutex or lock striping; the limitation is documented rather than solved with a lock nobody needs.</p></details>
+</section>

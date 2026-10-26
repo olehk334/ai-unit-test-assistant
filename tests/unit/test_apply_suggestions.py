@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ai_test_assistant.pipeline import apply_suggested_updates
+from ai_test_assistant.suggested_updates import apply_suggested_updates
 
 
 _SUGGESTED = (

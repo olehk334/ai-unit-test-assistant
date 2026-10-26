@@ -21,6 +21,7 @@ import os
 from typing import Any
 
 from fastapi import FastAPI, Request, Response
+from fastapi.concurrency import run_in_threadpool
 
 app = FastAPI(title="ai-test-assistant webhook receiver")
 
@@ -37,7 +38,7 @@ def verify_webhook_signature(raw_body: bytes, signature_header: str | None) -> b
     return hmac.compare_digest(expected, signature_header)
 
 
-def extract_pr_job(event: dict[str, Any], delivery_id: str) -> dict[str, Any] | None:
+def extract_pr_job(event: dict[str, Any]) -> dict[str, Any] | None:
     """Return the analysis job for a PR event, or None if it is not analyzable."""
     action = event.get("action")
     pull_request = event.get("pull_request")
@@ -50,7 +51,6 @@ def extract_pr_job(event: dict[str, Any], delivery_id: str) -> dict[str, Any] | 
         "pr_number": pull_request["number"],
         "head_sha": pull_request["head"]["sha"],
         "base_ref": pull_request["base"]["ref"],
-        "delivery_id": delivery_id,
     }
 
 
@@ -88,11 +88,11 @@ async def receive_webhook(request: Request) -> Response:
         return Response(status_code=200, content="ignored: not a pull_request event")
 
     event = json.loads(raw_body)
-    job = extract_pr_job(event, request.headers.get("X-GitHub-Delivery", ""))
+    job = extract_pr_job(event)
     if job is None:
         return Response(status_code=200, content="ignored: PR action not analyzable")
 
-    message_id = publish_pr_job(job)
+    message_id = await run_in_threadpool(publish_pr_job, job)
     return Response(
         status_code=202,
         content=json.dumps({"queued": True, "message_id": message_id, "job": job}),

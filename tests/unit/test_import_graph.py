@@ -42,6 +42,18 @@ def test_diamond_dependencies_resolve(tmp_path: Path) -> None:
     assert names[-1] == "top.py"
 
 
+def test_a_file_that_becomes_ready_keeps_its_original_place(tmp_path: Path) -> None:
+    user = _write(tmp_path, "user.py", "import dep\n")
+    early = _write(tmp_path, "early.py", "X = 1\n")
+    dep = _write(tmp_path, "dep.py", "Y = 1\n")
+    late = _write(tmp_path, "late.py", "Z = 1\n")
+
+    order = order_files_by_imports([user, early, dep, late], tmp_path)
+
+    # user.py waits for dep.py, then goes before late.py because it was listed first.
+    assert _names(order) == ["early.py", "dep.py", "user.py", "late.py"]
+
+
 def test_cycle_reported_and_original_order_kept(tmp_path: Path) -> None:
     a = _write(tmp_path, "a.py", "import b\n")
     b = _write(tmp_path, "b.py", "import a\n")
